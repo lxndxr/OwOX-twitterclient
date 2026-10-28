@@ -1,0 +1,3057 @@
+package com.shieve.owox
+
+import android.Manifest
+import android.annotation.SuppressLint
+import android.app.Dialog
+import android.app.DownloadManager
+import android.content.ContentResolver
+import android.content.ContentValues
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Typeface
+import android.media.AudioManager
+import android.media.MediaScannerConnection
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.os.Environment
+import android.os.Handler
+import android.os.Looper
+import android.os.Message
+import android.provider.MediaStore
+import android.provider.OpenableColumns
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
+import android.webkit.CookieManager
+import android.webkit.JavascriptInterface
+import android.webkit.MimeTypeMap
+import android.webkit.URLUtil
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.Typography
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.compose.runtime.produceState
+import org.json.JSONArray
+import org.json.JSONObject
+import org.json.JSONTokener
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
+import java.io.InputStream
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.Locale
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
+import java.util.concurrent.Executors
+import kotlin.math.roundToInt
+
+// ───────────────────────────── Константы ─────────────────────────────
+
+/** Акцентный цвет по умолчанию (фирменный голубой X). */
+private val DEFAULT_ACCENT = Color(0xFF1D9BF0)
+
+/** Сколько недавних цветов акцента хранится. */
+private const val RECENT_ACCENTS_MAX = 6
+private const val PREF_RECENT_ACCENTS = "recent_accents"
+
+private const val PREF_ACCENT = "accent_color"
+private const val PREF_TEXT_SCALE = "text_scale"
+private const val PREF_PARALLAX_STRENGTH = "parallax_strength"
+private const val PREF_FONT_VERSION = "custom_font_version"
+private const val PREF_FONT_NAME = "custom_font_name"
+private const val BACKGROUND_IMAGE_FILE = "custom_background.img"
+
+private const val TEXT_SCALE_MIN = 80
+private const val TEXT_SCALE_MAX = 140
+private const val TEXT_SCALE_DEFAULT = 100
+
+private const val X_HOME_URL = "https://x.com/home"
+
+private const val CHROME_UA =
+    "Mozilla/5.0 (Linux; Android 14; K) AppleWebKit/537.36 (KHTML, like Gecko) " +
+            "Chrome/126.0.0.0 Mobile Safari/537.36"
+
+/** Домены самого X: по ним синхронизируется кука темы и определяется активная вкладка. */
+private val X_DOMAINS = listOf("x.com", "twitter.com")
+
+/**
+ * Цвета (RGB-тройки), которые X рисует как «акцентные» и которые перекрашиваются в выбранный акцент:
+ *  - 29, 155, 240  фирменный голубой;
+ *  - 120, 86, 255  фиолетовая тема аккаунта (вкладки, «Показать N постов», кнопка «Написать»);
+ *  - 249, 24, 128  розовый цвет лайка (сердечко и счётчик).
+ * Если у аккаунта выбрана другая цветовая тема X (жёлтая, оранжевая, зелёная), добавьте её тройку сюда.
+ */
+private val ACCENT_SOURCES = listOf("29, 155, 240", "120, 86, 255", "249, 24, 128")
+
+/** Домены, которые открываются внутри приложения (сам X + вход через Google/Apple). */
+private val INTERNAL_DOMAINS = X_DOMAINS + listOf("google.com", "gstatic.com", "googleapis.com", "apple.com")
+
+/** Схемы, которые WebView обрабатывает сам и никогда не отдаёт внешним приложениям. */
+private val LOCAL_SCHEMES = setOf("about", "blob", "data", "javascript")
+
+/**
+ * Скрипт строится один раз. Он идемпотентен (защита флагом), поэтому его безопасно
+ * вызывать и в onPageStarted, и в onPageFinished: вторая инъекция страхует случай,
+ * когда первая попала ещё в старый документ. Работает только на страницах X.
+ *
+ * ВАЖНО: твиты нельзя прятать по [data-testid="placementTracking"]. X оборачивает в этот
+ * элемент видеоплееры и GIF, и такое правило вырезало из ленты все твиты с видео.
+ * Реклама определяется только по текстовой метке.
+ */
+private val CORE_SCRIPT = """
+    (function () {
+        var host = location.hostname;
+        var isX = host === 'x.com' || host === 'twitter.com' ||
+            host.endsWith('.x.com') || host.endsWith('.twitter.com');
+        if (!isX) return;
+
+        // WebView может вызвать скрипт раньше, чем X создаст documentElement.
+        // Не ставим флаг и не теряем инициализацию: повторный вызов сработает после загрузки DOM.
+        var root = document.documentElement;
+        if (!root) return;
+
+        var styleId = 'owox-core-style-v5';
+        var styleText =
+            '[data-testid="BottomBar"], a[href="/i/premium_sign_up"] { display: none !important; }' +
+            '[data-testid="FloatingActionButtons_Tweet_Button"] { bottom: calc(110px + env(safe-area-inset-bottom, 0px)) !important; ' +
+            'z-index: 41 !important; }' +
+            'html[data-owox-home-feed="1"] header, html[data-owox-home-feed="1"] [role="banner"] { ' +
+            'position: sticky !important; top: 0 !important; transform: none !important; translate: none !important; ' +
+            'z-index: 40 !important; }' +
+            'html[data-owox-home-feed="1"] [data-owox-sticky-feed-header="1"] { position: sticky !important; ' +
+            'top: 0 !important; transform: none !important; translate: none !important; z-index: 40 !important; }' +
+            'html[data-owox-home-feed="1"] [data-owox-feed-header-block="1"], ' +
+            'html[data-owox-home-feed="1"] [data-owox-feed-tabs-block="1"] { position: sticky !important; ' +
+            'top: 0 !important; transform: none !important; translate: none !important; visibility: visible !important; ' +
+            'opacity: 1 !important; z-index: 41 !important; }' +
+            'html[data-owox-home-feed="1"] [role="tablist"] { position: sticky !important; ' +
+            'top: var(--owox-feed-tabs-top, 0px) !important; transform: none !important; translate: none !important; ' +
+            'z-index: 39 !important; }' +
+            '[data-owox-feed-fixed="1"] { position: fixed !important; transform: none !important; ' +
+            'translate: none !important; visibility: visible !important; opacity: 1 !important; ' +
+            'z-index: 2147483000 !important; }' +
+            /* Меню действий поста: оформляем под Material 3, оставляя штатные обработчики X. */
+            '[data-testid="sheetDialog"] { background: var(--owox-menu-bg, #fff) !important; ' +
+            'border-radius: 28px 28px 0 0 !important; overflow-y: hidden !important; ' +
+            'max-height: calc(100vh - 88px) !important; box-shadow: 0 -8px 32px rgba(0,0,0,.18) !important; ' +
+            'display: flex !important; flex-direction: column !important; justify-content: flex-start !important; ' +
+            'transform-origin: center bottom !important; animation: owox-sheet-enter 520ms cubic-bezier(.2,0,0,1) both !important; }' +
+            '@keyframes owox-sheet-enter { from { transform: translate3d(0,100%,0); opacity: .7; } ' +
+            'to { transform: translate3d(0,0,0); opacity: 1; } }' +
+            '[data-testid="sheetDialog"] [role="menuitem"] { box-sizing: border-box !important; ' +
+            'display: flex !important; flex-direction: row !important; justify-content: flex-start !important; ' +
+            'align-items: center !important; gap: 12px !important; height: auto !important; min-height: 46px !important; ' +
+            'padding: 6px 16px !important; color: var(--owox-menu-fg, #191c20) !important; ' +
+            'font-size: 14px !important; font-weight: 400 !important; line-height: 18px !important; text-align: left !important; }' +
+            '[data-testid="sheetDialog"] [role="menuitem"] span { font-size: 14px !important; ' +
+            'font-weight: 400 !important; line-height: 18px !important; text-align: left !important; ' +
+            'flex: 1 1 auto !important; min-width: 0 !important; white-space: normal !important; }' +
+            '[data-testid="sheetDialog"] [role="menuitem"] { ' +
+            'background: var(--owox-accent-container, #eaf4fc) !important; ' +
+            'border-radius: 999px !important; margin: 2px 12px !important; ' +
+            'width: calc(100% - 24px) !important; }' +
+            '[data-testid="sheetDialog"] [role="menuitem"] svg { width: 20px !important; ' +
+            'height: 20px !important; flex: 0 0 20px !important; color: var(--owox-menu-fg, #191c20) !important; }' +
+            '[data-testid="sheetDialog"] button:last-child { min-height: 48px !important; ' +
+            'margin: 6px 20px 12px !important; width: calc(100% - 40px) !important; ' +
+            'border: 1px solid var(--owox-outline, #c4c7cc) !important; border-radius: 28px !important; ' +
+            'background: transparent !important; color: var(--owox-menu-fg, #191c20) !important; ' +
+            'font-size: 16px !important; font-weight: 500 !important; }';
+        function ensureStyle() {
+            var staleStyle = document.getElementById('owox-core-style-v4');
+            if (staleStyle) staleStyle.remove();
+            var dark = document.cookie.indexOf('night_mode=2') !== -1;
+            document.documentElement.style.setProperty('--owox-header-bg', dark ? '#000000' : '#ffffff');
+            document.documentElement.style.setProperty('--owox-menu-bg', dark ? '#16181c' : '#ffffff');
+            document.documentElement.style.setProperty('--owox-menu-fg', dark ? '#e7e9ea' : '#191c20');
+            document.documentElement.style.setProperty('--owox-outline', dark ? '#5b6168' : '#c4c7cc');
+            document.documentElement.style.setProperty('--owox-accent-container', dark
+                ? 'color-mix(in srgb, var(--owox-accent, #1d9bf0) 24%, #16181c)'
+                : 'color-mix(in srgb, var(--owox-accent, #1d9bf0) 12%, #ffffff)');
+            var appliedStyleText = styleText;
+            var style = document.getElementById(styleId);
+            if (!style) {
+                style = document.createElement('style');
+                style.id = styleId;
+            }
+            if (style.textContent !== appliedStyleText) style.textContent = appliedStyleText;
+            if (!style.isConnected) (document.head || document.documentElement).appendChild(style);
+        }
+
+        var lastOverlayOpen = null;
+        function reportOverlayVisibility() {
+            var overlays = document.querySelectorAll('[data-testid="sheetDialog"]');
+            var open = false;
+            for (var i = 0; i < overlays.length; i++) {
+                var overlayStyle = window.getComputedStyle(overlays[i]);
+                if (overlays[i].getClientRects().length && overlayStyle.display !== 'none' && overlayStyle.visibility !== 'hidden') {
+                    open = true;
+                    break;
+                }
+            }
+            if (!open) {
+                var viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+                var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+                var fullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+                if (fullscreen && (fullscreen.tagName === 'VIDEO' || fullscreen.querySelector('video'))) open = true;
+
+                var videos = document.querySelectorAll('[data-testid="videoPlayer"],video');
+                for (var playerIndex = 0; !open && playerIndex < videos.length; playerIndex++) {
+                    var player = videos[playerIndex];
+                    var playerStyle = window.getComputedStyle(player);
+                    if (!player.getClientRects().length || playerStyle.display === 'none' || playerStyle.visibility === 'hidden') continue;
+                    var playerRect = player.getBoundingClientRect();
+                    var fillsVideoView = playerRect.width >= viewportWidth * 0.84 &&
+                        playerRect.height >= viewportHeight * 0.30 &&
+                        playerRect.top < viewportHeight * 0.72 && playerRect.bottom > viewportHeight * 0.55;
+                    var fixedVideoLayer = false;
+                    var ancestor = player.parentElement;
+                    var depth = 0;
+                    while (ancestor && depth++ < 5) {
+                        var ancestorStyle = window.getComputedStyle(ancestor);
+                        if (ancestorStyle.position === 'fixed' &&
+                            ancestor.getBoundingClientRect().width >= viewportWidth * 0.84 &&
+                            ancestor.getBoundingClientRect().height >= viewportHeight * 0.45) {
+                            fixedVideoLayer = true;
+                            break;
+                        }
+                        ancestor = ancestor.parentElement;
+                    }
+                    if (fillsVideoView || fixedVideoLayer) {
+                        open = true;
+                        break;
+                    }
+                }
+            }
+            if (open === lastOverlayOpen) return;
+            lastOverlayOpen = open;
+            if (window.OwOXNative) window.OwOXNative.onOverlayVisibility(open);
+        }
+
+        function ensureStickyFeedHeader() {
+            if (window.__owoxFeedHeaderVersion !== 5) {
+                var legacyFixed = document.querySelectorAll('[data-owox-feed-fixed="1"]');
+                for (var legacyIndex = 0; legacyIndex < legacyFixed.length; legacyIndex++) {
+                    var legacy = legacyFixed[legacyIndex];
+                    if (legacy.getAttribute('data-owox-had-style') === '1') {
+                        legacy.setAttribute('style', legacy.getAttribute('data-owox-original-style') || '');
+                    } else {
+                        legacy.removeAttribute('style');
+                    }
+                    legacy.removeAttribute('data-owox-feed-fixed');
+                    legacy.removeAttribute('data-owox-original-style');
+                    legacy.removeAttribute('data-owox-had-style');
+                }
+                var legacySpacers = document.querySelectorAll('[data-owox-feed-spacer]');
+                for (var spacerIndex = 0; spacerIndex < legacySpacers.length; spacerIndex++) legacySpacers[spacerIndex].remove();
+                var oldHeaderMarks = document.querySelectorAll('[data-owox-sticky-feed-header], [data-owox-feed-header-block], [data-owox-feed-tabs-block], [data-owox-feed-tabs-block]');
+                for (var markIndex = 0; markIndex < oldHeaderMarks.length; markIndex++) {
+                    oldHeaderMarks[markIndex].removeAttribute('data-owox-sticky-feed-header');
+                    oldHeaderMarks[markIndex].removeAttribute('data-owox-feed-header-block');
+                    oldHeaderMarks[markIndex].removeAttribute('data-owox-feed-tabs-block');
+                }
+                window.__owoxFeedHeaderVersion = 5;
+            }
+            if (location.pathname !== '/home') {
+                var fixedNodes = document.querySelectorAll('[data-owox-feed-fixed="1"]');
+                for (var i = 0; i < fixedNodes.length; i++) {
+                    var fixed = fixedNodes[i];
+                    var spacer = fixed.previousElementSibling;
+                    if (spacer && spacer.hasAttribute('data-owox-feed-spacer')) spacer.remove();
+                    if (fixed.getAttribute('data-owox-had-style') === '1') {
+                        fixed.setAttribute('style', fixed.getAttribute('data-owox-original-style') || '');
+                    } else {
+                        fixed.removeAttribute('style');
+                    }
+                    fixed.removeAttribute('data-owox-feed-fixed');
+                    fixed.removeAttribute('data-owox-original-style');
+                    fixed.removeAttribute('data-owox-had-style');
+                }
+                root.removeAttribute('data-owox-home-feed');
+                root.style.removeProperty('--owox-feed-tabs-top');
+                return;
+            }
+
+            root.setAttribute('data-owox-home-feed', '1');
+            var primary = document.querySelector('[data-testid="primaryColumn"]') || document.querySelector('main') || root;
+            var scope = root;
+            var tabList = null;
+            var roleTabLists = scope.querySelectorAll('[role="tablist"]');
+            for (var listIndex = 0; listIndex < roleTabLists.length; listIndex++) {
+                var listText = (roleTabLists[listIndex].innerText || roleTabLists[listIndex].textContent || '').toLowerCase();
+                if ((/для вас|for you/.test(listText)) && (/читаю|following/.test(listText))) {
+                    tabList = roleTabLists[listIndex];
+                    break;
+                }
+            }
+            if (!tabList) {
+                var tabItems = scope.querySelectorAll('[role="tab"], a, button, [role="link"]');
+                var forYouTab = null;
+                var followingTab = null;
+                for (var itemIndex = 0; itemIndex < tabItems.length; itemIndex++) {
+                    var itemText = (tabItems[itemIndex].innerText || tabItems[itemIndex].textContent || '')
+                        .replace(/\s+/g, ' ').trim().toLowerCase();
+                    if (!forYouTab && /^(для вас|for you)$/.test(itemText)) forYouTab = tabItems[itemIndex];
+                    if (!followingTab && /^(читаю|following)$/.test(itemText)) followingTab = tabItems[itemIndex];
+                }
+                if (forYouTab && followingTab) {
+                    var shared = forYouTab.parentElement;
+                    var sharedBoundary = primary.contains(forYouTab) ? primary : root;
+                    while (shared && shared !== sharedBoundary && !shared.contains(followingTab)) {
+                        shared = shared.parentElement;
+                    }
+                    if (shared && shared !== sharedBoundary) tabList = shared;
+                }
+            }
+            if (!tabList) return;
+
+            var topBlock = null;
+            var tabHeight = tabList.getBoundingClientRect().height || 54;
+            var ancestor = tabList.parentElement;
+            var depth = 0;
+            var blockBoundary = primary.contains(tabList) ? primary : root;
+            while (ancestor && ancestor !== blockBoundary && depth++ < 8) {
+                var height = ancestor.getBoundingClientRect().height;
+                var hasProfileRow = ancestor.querySelector('img, [data-testid*="Avatar"], [data-testid*="Account"], [aria-label*="account" i]');
+                if (hasProfileRow && height > tabHeight + 8 && height <= 220 &&
+                    !ancestor.querySelector('article[data-testid="tweet"]')) {
+                    topBlock = ancestor;
+                }
+                ancestor = ancestor.parentElement;
+            }
+
+            var header = scope.querySelector('header, [role="banner"]');
+            if (!topBlock && header && !header.contains(tabList)) {
+                var order = header.compareDocumentPosition(tabList);
+                if ((order & Node.DOCUMENT_POSITION_FOLLOWING) !== 0) {
+                    pinFeedHeaderElement(header, 0);
+                    pinFeedHeaderElement(tabList, Math.ceil(header.getBoundingClientRect().height || 56));
+                    return;
+                }
+            }
+
+            pinFeedHeaderElement(topBlock || tabList, 0);
+        }
+
+        function pinFeedHeaderElement(element, top) {
+            if (!element || !element.parentElement) return;
+            if (!element.hasAttribute('data-owox-feed-fixed')) {
+                var hadStyle = element.hasAttribute('style');
+                element.setAttribute('data-owox-original-style', element.getAttribute('style') || '');
+                element.setAttribute('data-owox-had-style', hadStyle ? '1' : '0');
+                element.setAttribute('data-owox-feed-fixed', '1');
+
+                var spacer = document.createElement('div');
+                spacer.setAttribute('data-owox-feed-spacer', '1');
+                spacer.setAttribute('aria-hidden', 'true');
+                spacer.style.cssText = 'height:' + Math.max(element.offsetHeight, 54) + 'px; width:100%; visibility:hidden; pointer-events:none;';
+                element.parentElement.insertBefore(spacer, element);
+            }
+
+            var rect = element.getBoundingClientRect();
+            var viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+            var fixedWidth = viewportWidth;
+            var fixedLeft = 0;
+            element.style.setProperty('position', 'fixed', 'important');
+            element.style.setProperty('top', top + 'px', 'important');
+            element.style.setProperty('left', fixedLeft + 'px', 'important');
+            element.style.setProperty('right', 'auto', 'important');
+            element.style.setProperty('width', fixedWidth + 'px', 'important');
+            element.style.setProperty('max-width', fixedWidth + 'px', 'important');
+            element.style.setProperty('box-sizing', 'border-box', 'important');
+            element.style.setProperty('transform', 'none', 'important');
+            element.style.setProperty('translate', 'none', 'important');
+            element.style.setProperty('visibility', 'visible', 'important');
+            element.style.setProperty('opacity', '1', 'important');
+            element.style.setProperty('z-index', '2147483000', 'important');
+            element.style.setProperty('background-color', 'var(--owox-header-bg, #000)', 'important');
+
+            var finalRect = element.getBoundingClientRect();
+            var actualTop = finalRect.top;
+            if (Math.abs(actualTop - top) > 1) {
+                var currentTop = parseFloat(element.style.getPropertyValue('top')) || top;
+                element.style.setProperty('top', (currentTop + top - actualTop) + 'px', 'important');
+            }
+            if (Math.abs(finalRect.left - fixedLeft) > 1) {
+                var currentLeft = parseFloat(element.style.getPropertyValue('left')) || fixedLeft;
+                element.style.setProperty('left', (currentLeft + fixedLeft - finalRect.left) + 'px', 'important');
+            }
+        }
+
+        ensureStyle();
+        ensureStickyFeedHeader();
+        reportOverlayVisibility();
+
+        // X запускает ролики в ленте без звука. После явного нажатия Play
+        // включаем звук у начавшего воспроизводиться видео; кнопку mute/unmute X не перехватываем.
+        if (!window.__owoxAudioTapFix) {
+            window.__owoxAudioTapFix = true;
+            document.addEventListener('click', function (event) {
+                var target = event.target && event.target.nodeType === 1
+                    ? event.target
+                    : event.target && event.target.parentElement;
+                if (!target || !target.closest) return;
+                var player = target.closest('[data-testid="videoPlayer"]');
+                if (!player) return;
+                var control = target.closest('button, [role="button"]');
+                var label = control ? (control.getAttribute('aria-label') || '') : '';
+                if (/mute|sound|audio|звук|громк/i.test(label)) return;
+                window.setTimeout(function () {
+                    var videos = player.querySelectorAll('video');
+                    for (var i = 0; i < videos.length; i++) {
+                        var video = videos[i];
+                        if (!video.paused) {
+                            video.muted = false;
+                            video.defaultMuted = false;
+                            if (video.volume === 0) video.volume = 1;
+                        }
+                    }
+                }, 120);
+            }, true);
+        }
+
+        if (window.__owox) return;
+        window.__owox = true;
+
+        // 2. Встроенный AdBlock по текстовой метке. Проверяем только новые твиты,
+        //    не чаще одного раза за кадр. Текст самого твита и видеоплеер пропускаем.
+        var AD_LABELS = { 'Promoted': 1, 'Реклама': 1, 'Ad': 1 };
+        var SKIP = '[data-testid="tweetText"], [data-testid="videoPlayer"]';
+        var scheduled = false;
+
+        function clean() {
+            scheduled = false;
+            var articles = document.querySelectorAll('article[data-testid="tweet"]:not([data-owox-ok])');
+            for (var i = 0; i < articles.length; i++) {
+                var article = articles[i];
+                if (!article.querySelector('[data-testid="User-Name"]')) continue; // ещё не отрисован
+                article.setAttribute('data-owox-ok', '1');
+                var spans = article.querySelectorAll('span');
+                for (var j = 0; j < spans.length; j++) {
+                    var span = spans[j];
+                    if (AD_LABELS[span.textContent.trim()] === 1 && !span.closest(SKIP)) {
+                        article.style.display = 'none';
+                        break;
+                    }
+                }
+            }
+        }
+
+        function schedule() {
+            if (!scheduled) {
+                scheduled = true;
+                requestAnimationFrame(clean);
+            }
+        }
+
+        var pinScheduled = false;
+        function scheduleStickyHeader() {
+            if (pinScheduled) return;
+            pinScheduled = true;
+            requestAnimationFrame(function () {
+                pinScheduled = false;
+                ensureStickyFeedHeader();
+            });
+        }
+
+        // X может заменить head при старте SPA. Следим за DOM и возвращаем свои стили,
+        // если сайт удалил их или пересоздал документную оболочку.
+        new MutationObserver(function () {
+            ensureStyle();
+            ensureStickyFeedHeader();
+            reportOverlayVisibility();
+            schedule();
+        }).observe(root, { childList: true, subtree: true });
+        window.setInterval(reportOverlayVisibility, 300);
+        window.addEventListener('scroll', scheduleStickyHeader, true);
+        window.addEventListener('resize', scheduleStickyHeader);
+        window.addEventListener('popstate', scheduleStickyHeader);
+        schedule();
+
+        // 3. Счётчики непрочитанного: читаем бейджи на ссылках нативной панели X
+        //    (она скрыта стилем выше, но остаётся в DOM и обновляется) и передаём в приложение.
+        function parseCount(text) {
+            var m = /(\d{1,3})(\+?)/.exec(text || '');
+            if (!m) return 0;
+            return m[2] ? 100 : parseInt(m[1], 10);
+        }
+
+        // -1: ссылки на странице нет, значение в приложении менять не нужно
+        function readBadge(hrefs) {
+            var link = null;
+            for (var i = 0; i < hrefs.length && !link; i++) {
+                link = document.querySelector('a[href="' + hrefs[i] + '"]');
+            }
+            if (!link) return -1;
+            var fromLabel = parseCount(link.getAttribute('aria-label'));
+            if (fromLabel) return fromLabel;
+            var live = link.querySelector('[aria-live]');
+            if (live) return parseCount(live.textContent);
+            var spans = link.querySelectorAll('span');
+            for (var j = 0; j < spans.length; j++) {
+                var t = spans[j].textContent.trim();
+                var d = /^(\d{1,3})(\+?)/.exec(t);
+                if (d && d[0] === t) return parseCount(t);
+            }
+            return 0;
+        }
+
+        var lastReport = '';
+        function report() {
+            var n = readBadge(['/notifications']);
+            var m = readBadge(['/messages', '/i/chat']);
+            if (n < 0 && m < 0) return;
+            var key = n + ':' + m;
+            if (key === lastReport) return;
+            lastReport = key;
+            if (window.OwOXNative) window.OwOXNative.onBadges(n, m);
+        }
+
+        setInterval(report, 2000);
+        report();
+    })();
+""".trimIndent()
+
+/**
+ * Определяет, есть ли видео под пальцем (координаты в CSS-пикселях), и возвращает JSON
+ * с адресом ролика, id твита и токеном для embed-API X. Пустая строка: видео нет.
+ */
+private fun mediaProbeScript(x: Float, y: Float): String = """
+    (function (x, y) {
+        var el = document.elementFromPoint(x, y);
+        var article = el ? el.closest('article') : null;
+        var scope = article || document;
+        var videos = scope.querySelectorAll('video');
+        var target = null;
+        for (var i = 0; i < videos.length; i++) {
+            var r = videos[i].getBoundingClientRect();
+            if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+                target = videos[i];
+                break;
+            }
+        }
+        if (!target) return '';
+        var id = '';
+        var holder = target.closest('article');
+        var time = holder ? holder.querySelector('a[href*="/status/"] time') : null;
+        var href = time ? time.closest('a').getAttribute('href') : location.pathname;
+        var m = /\/status\/(\d+)/.exec(href || '');
+        if (m) id = m[1];
+        var token = id ? ((Number(id) / 1e15) * Math.PI).toString(36).replace(/(0+|\.)/g, '') : '';
+        return JSON.stringify({ src: target.currentSrc || target.src || '', id: id, token: token });
+    })($x, $y);
+""".trimIndent()
+
+// ───────────────────────────── Темы ─────────────────────────────
+
+enum class AppThemeMode(
+    val id: Int,
+    val title: String,
+    val subtitle: String,
+    val cookieValue: String,
+    val bgColor: Color,
+    val isDark: Boolean
+) {
+    BLACK(
+        id = 2,
+        title = "Тёмная (Ночная)",
+        subtitle = "Глубокий черный фон (#000000)",
+        cookieValue = "2",
+        bgColor = Color(0xFF000000),
+        isDark = true
+    ),
+    WHITE(
+        id = 0,
+        title = "Белая (Дневная)",
+        subtitle = "Классическая светлая тема (#FFFFFF)",
+        cookieValue = "0",
+        bgColor = Color(0xFFFFFFFF),
+        isDark = false
+    );
+
+    /** Цвет фона для нативного WebView (виден до отрисовки страницы). */
+    val webViewColor: Int get() = bgColor.toArgb()
+
+    companion object {
+        /** Неизвестный id (например, удалённая тема Dim из старых настроек) превращается в чёрную тему. */
+        fun fromId(id: Int): AppThemeMode = entries.find { it.id == id } ?: BLACK
+    }
+}
+
+/**
+ * Полная цветовая схема Material 3: основа задаётся темой X, а все акцентные роли
+ * (primary, контейнеры, индикатор навигации) выводятся из выбранного цвета акцента.
+ */
+private fun AppThemeMode.toColorScheme(accent: Color): ColorScheme {
+    val base = when (this) {
+        AppThemeMode.BLACK -> darkColorScheme(
+            primary = DEFAULT_ACCENT,
+            background = Color(0xFF000000),
+            onBackground = Color(0xFFE7E9EA),
+            surface = Color(0xFF000000),
+            onSurface = Color(0xFFE7E9EA),
+            surfaceVariant = Color(0xFF16181C),
+            onSurfaceVariant = Color(0xFF8A9096),
+            surfaceDim = Color(0xFF000000),
+            surfaceBright = Color(0xFF2A2D31),
+            surfaceContainerLowest = Color(0xFF000000),
+            surfaceContainerLow = Color(0xFF0A0C0E),
+            surfaceContainer = Color(0xFF111316),
+            surfaceContainerHigh = Color(0xFF181B1F),
+            surfaceContainerHighest = Color(0xFF20242A),
+            outline = Color(0xFF5B6168),
+            outlineVariant = Color(0xFF2F3336)
+        )
+
+        AppThemeMode.WHITE -> lightColorScheme(
+            primary = DEFAULT_ACCENT,
+            background = Color(0xFFFFFFFF),
+            onBackground = Color(0xFF0F1419),
+            surface = Color(0xFFFFFFFF),
+            onSurface = Color(0xFF0F1419),
+            surfaceVariant = Color(0xFFF7F9F9),
+            onSurfaceVariant = Color(0xFF536471),
+            surfaceDim = Color(0xFFE3E7EA),
+            surfaceBright = Color(0xFFFFFFFF),
+            surfaceContainerLowest = Color(0xFFFFFFFF),
+            surfaceContainerLow = Color(0xFFF8FAFB),
+            surfaceContainer = Color(0xFFF1F4F6),
+            surfaceContainerHigh = Color(0xFFEBEFF2),
+            surfaceContainerHighest = Color(0xFFE4E9EC),
+            outline = Color(0xFF75828C),
+            outlineVariant = Color(0xFFCFD9DE)
+        )
+    }
+
+    // Цвет текста/иконок поверх акцента: чёрный на светлом акценте, белый на тёмном
+    val onAccent = if (accent.luminance() > 0.45f) Color.Black else Color.White
+
+    return if (isDark) {
+        base.copy(
+            primary = accent,
+            onPrimary = onAccent,
+            primaryContainer = lerp(base.surface, accent, 0.32f),
+            onPrimaryContainer = lerp(accent, Color.White, 0.80f),
+            secondary = lerp(accent, base.onSurfaceVariant, 0.45f),
+            secondaryContainer = lerp(base.surface, accent, 0.26f),
+            onSecondaryContainer = lerp(accent, Color.White, 0.85f),
+            surfaceTint = accent
+        )
+    } else {
+        base.copy(
+            primary = accent,
+            onPrimary = onAccent,
+            primaryContainer = lerp(base.surface, accent, 0.22f),
+            onPrimaryContainer = lerp(accent, Color.Black, 0.65f),
+            secondary = lerp(accent, base.onSurfaceVariant, 0.45f),
+            secondaryContainer = lerp(base.surface, accent, 0.18f),
+            onSecondaryContainer = lerp(accent, Color.Black, 0.70f),
+            surfaceTint = accent
+        )
+    }
+}
+
+/** Применяет куку темы X. Страница подхватит её при следующей загрузке/перезагрузке. */
+private fun applyThemeCookies(theme: AppThemeMode) {
+    val cookieManager = CookieManager.getInstance()
+    cookieManager.setAcceptCookie(true)
+    for (domain in X_DOMAINS) {
+        cookieManager.setCookie(
+            "https://$domain",
+            "night_mode=${theme.cookieValue}; domain=.$domain; path=/; max-age=31536000; Secure; SameSite=None"
+        )
+    }
+    cookieManager.flush()
+}
+
+// ───────────────────────────── Навигация ─────────────────────────────
+
+private data class NavTab(
+    val path: String,
+    val label: String,
+    val icon: ImageVector,
+    val selectedIcon: ImageVector
+)
+
+private val NavTabs = listOf(
+    NavTab("/home", "Главное", Icons.Outlined.Home, Icons.Filled.Home),
+    NavTab("/explore", "Поиск", Icons.Outlined.Search, Icons.Filled.Search),
+    NavTab("/notifications", "Уведомления", Icons.Outlined.Notifications, Icons.Filled.Notifications),
+    NavTab("/messages", "Сообщения", Icons.Outlined.Email, Icons.Filled.Email)
+)
+
+private const val TAB_NOTIFICATIONS = 2
+private const val TAB_MESSAGES = 3
+
+/** Переход внутри SPA кликом по ссылке; если ссылки нет в DOM, обычная загрузка страницы. */
+private fun WebView.openPath(path: String) {
+    evaluateJavascript(
+        """
+        (function () {
+            var link = document.querySelector('a[href="$path"]');
+            if (link) link.click(); else location.href = 'https://x.com$path';
+        })();
+        """.trimIndent(),
+        null
+    )
+}
+
+private fun hostIn(host: String?, domains: List<String>): Boolean {
+    val h = host?.lowercase() ?: return false
+    return domains.any { h == it || h.endsWith(".$it") }
+}
+
+/** Индекс вкладки нижней панели для адреса страницы X или null, если страница не относится ни к одной. */
+private fun tabForUrl(url: String?): Int? {
+    val uri = Uri.parse(url ?: return null)
+    if (!hostIn(uri.host, X_DOMAINS)) return null
+    val path = uri.path.orEmpty().trimEnd('/')
+    return when {
+        path == "/home" -> 0
+        path == "/explore" || path.startsWith("/explore/") || path == "/search" -> 1
+        path == "/notifications" || path.startsWith("/notifications/") -> TAB_NOTIFICATIONS
+        path == "/messages" || path.startsWith("/messages/") || path.startsWith("/i/chat") -> TAB_MESSAGES
+        else -> null
+    }
+}
+
+private fun isInternalUri(uri: Uri): Boolean {
+    val host = uri.host?.lowercase()
+    return hostIn(host, INTERNAL_DOMAINS) || host?.startsWith("accounts.google.") == true
+}
+
+private fun openExternally(context: Context, uri: Uri) {
+    try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+    } catch (_: Exception) {
+        // нет приложения, способного открыть ссылку
+    }
+}
+
+private val mainHandler = Handler(Looper.getMainLooper())
+
+/**
+ * Мост для JS: страница передаёт сюда число непрочитанных уведомлений и сообщений
+ * (-1 означает «не менять»). Вызовы приходят из служебного потока, поэтому
+ * результат переносится в главный.
+ */
+class OwOXBridge(
+    private val badgeListener: (notifications: Int, messages: Int) -> Unit,
+    private val overlayListener: (visible: Boolean) -> Unit
+) {
+    @JavascriptInterface
+    fun onBadges(notifications: Int, messages: Int) {
+        mainHandler.post { badgeListener(notifications, messages) }
+    }
+
+    @JavascriptInterface
+    fun onOverlayVisibility(visible: Boolean) {
+        mainHandler.post { overlayListener(visible) }
+    }
+}
+
+// ───────────────────────────── Загрузки ─────────────────────────────
+
+/** Ролик, найденный под пальцем: прямой адрес (если есть), id твита и токен embed-API. */
+private data class VideoProbe(val src: String, val tweetId: String, val token: String)
+
+private data class DownloadTask(
+    val url: String,
+    val fileName: String,
+    val mimeType: String,
+    /** Если задан, прямой адрес видео сначала нужно получить через embed-API X. */
+    val probe: VideoProbe? = null
+)
+
+private class FileChooserHolder {
+    var callback: ValueCallback<Array<Uri>>? = null
+}
+
+private class PendingDownloadHolder {
+    var task: DownloadTask? = null
+}
+
+private val ioExecutor = Executors.newCachedThreadPool()
+
+private fun toastOnMain(context: Context, text: String) {
+    mainHandler.post { Toast.makeText(context, text, Toast.LENGTH_SHORT).show() }
+}
+
+private fun openConnection(url: String): HttpURLConnection =
+    (URL(url).openConnection() as HttpURLConnection).apply {
+        connectTimeout = 15_000
+        readTimeout = 30_000
+        setRequestProperty("User-Agent", CHROME_UA)
+        setRequestProperty("Referer", "https://x.com/")
+    }
+
+/** Для картинок твитов (pbs.twimg.com/media) запрашиваем оригинальный размер. */
+private fun originalImageUrl(url: String): String {
+    val uri = Uri.parse(url)
+    if (uri.host != "pbs.twimg.com" || uri.path?.startsWith("/media/") != true) return url
+    val builder = uri.buildUpon().clearQuery()
+    uri.queryParameterNames
+        .filter { it != "name" }
+        .forEach { builder.appendQueryParameter(it, uri.getQueryParameter(it)) }
+    builder.appendQueryParameter("name", "orig")
+    return builder.build().toString()
+}
+
+private fun imageDownloadTask(rawUrl: String): DownloadTask {
+    val url = originalImageUrl(rawUrl)
+    val uri = Uri.parse(url)
+    val ext = uri.getQueryParameter("format")
+        ?: uri.lastPathSegment?.substringAfterLast('.', "")?.takeIf { it.length in 3..4 }
+        ?: "jpg"
+    val mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext.lowercase()) ?: "image/jpeg"
+    return DownloadTask(url, "owox_${System.currentTimeMillis()}.$ext", mime)
+}
+
+/** GIF в X на самом деле mp4-ролики из tweet_video: сохраняются как короткое зацикленное видео. */
+private fun isGifProbe(probe: VideoProbe): Boolean = probe.src.contains("tweet_video")
+
+private fun videoDownloadTask(probe: VideoProbe): DownloadTask {
+    val name = "owox_${System.currentTimeMillis()}.mp4"
+    val isDirect = probe.src.startsWith("http", ignoreCase = true) && probe.src.contains(".mp4")
+    // blob:-адреса плеера скачать нельзя, поэтому для них прямая ссылка ищется через твит
+    return if (isDirect) {
+        DownloadTask(probe.src, name, "video/mp4")
+    } else {
+        DownloadTask(probe.src, name, "video/mp4", probe)
+    }
+}
+
+/** Разбор ответа скрипта mediaProbeScript (evaluateJavascript возвращает JSON-строку в кавычках). */
+private fun parseVideoProbe(raw: String?): VideoProbe? {
+    if (raw.isNullOrBlank() || raw == "null") return null
+    return try {
+        val text = JSONTokener(raw).nextValue() as? String ?: return null
+        if (text.isEmpty()) return null
+        val json = JSONObject(text)
+        VideoProbe(json.optString("src"), json.optString("id"), json.optString("token"))
+    } catch (_: Exception) {
+        null
+    }
+}
+
+private fun resolutionScore(url: String): Int {
+    val match = Regex("""/(\d+)x(\d+)/""").find(url) ?: return 0
+    return match.groupValues[1].toInt() * match.groupValues[2].toInt()
+}
+
+/** Из списка вариантов выбирает mp4 лучшего качества (по битрейту, а без него по разрешению в адресе). */
+private fun pickBestMp4(variants: JSONArray?, typeKey: String, urlKey: String): String? {
+    if (variants == null) return null
+    var best: String? = null
+    var bestScore = -1L
+    for (i in 0 until variants.length()) {
+        val variant = variants.optJSONObject(i) ?: continue
+        if (variant.optString(typeKey) != "video/mp4") continue
+        val url = variant.optString(urlKey)
+        if (url.isBlank()) continue
+        val bitrate = variant.optInt("bitrate", 0)
+        val score = if (bitrate > 0) bitrate.toLong() else resolutionScore(url).toLong()
+        if (score > bestScore) {
+            bestScore = score
+            best = url
+        }
+    }
+    return best
+}
+
+private fun findMp4(tweet: JSONObject): String? {
+    val media = tweet.optJSONArray("mediaDetails")
+    if (media != null) {
+        for (i in 0 until media.length()) {
+            val variants = media.optJSONObject(i)?.optJSONObject("video_info")?.optJSONArray("variants")
+            pickBestMp4(variants, "content_type", "url")?.let { return it }
+        }
+    }
+    return pickBestMp4(tweet.optJSONObject("video")?.optJSONArray("variants"), "type", "src")
+}
+
+/** Получает прямую mp4-ссылку через публичный embed-API X. Выполняется в фоновом потоке. */
+private fun resolveVideoUrl(probe: VideoProbe): String {
+    if (probe.tweetId.isBlank()) throw IOException("не удалось определить твит с видео")
+    val endpoint = "https://cdn.syndication.twimg.com/tweet-result?id=${probe.tweetId}&token=${probe.token}"
+    val connection = openConnection(endpoint)
+    try {
+        if (connection.responseCode !in 200..299) throw IOException("X не отдал данные твита (${connection.responseCode})")
+        val body = connection.inputStream.bufferedReader().use { it.readText() }
+        val json = JSONObject(body)
+        return findMp4(json)
+            ?: json.optJSONObject("quoted_tweet")?.let { findMp4(it) }
+            ?: throw IOException("в твите не найдено видео")
+    } finally {
+        connection.disconnect()
+    }
+}
+
+/**
+ * Картинки и видео сохраняются сами (не через DownloadManager), чтобы они гарантированно
+ * появлялись в галерее. Остальные файлы уходят в системную папку «Загрузки».
+ */
+private fun enqueueDownload(context: Context, task: DownloadTask) {
+    val appContext = context.applicationContext
+    val isMedia = task.probe != null || task.mimeType.startsWith("image/") || task.mimeType.startsWith("video/")
+    if (isMedia) {
+        toastOnMain(appContext, "Сохраняю…")
+        ioExecutor.execute {
+            try {
+                val resolved = task.probe?.let { task.copy(url = resolveVideoUrl(it), probe = null) } ?: task
+                val location = saveMediaToGallery(appContext, resolved)
+                toastOnMain(appContext, "Сохранено в $location")
+            } catch (e: Exception) {
+                toastOnMain(appContext, "Не удалось сохранить: ${e.message ?: "ошибка сети"}")
+            }
+        }
+    } else {
+        enqueueWithDownloadManager(appContext, task)
+    }
+}
+
+private fun enqueueWithDownloadManager(context: Context, task: DownloadTask) {
+    try {
+        val request = DownloadManager.Request(Uri.parse(task.url))
+            .setMimeType(task.mimeType)
+            .addRequestHeader("User-Agent", CHROME_UA)
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "OwOX/${task.fileName}")
+        CookieManager.getInstance().getCookie(task.url)?.let { request.addRequestHeader("Cookie", it) }
+        context.getSystemService(DownloadManager::class.java).enqueue(request)
+        toastOnMain(context, "Загрузка началась")
+    } catch (_: Exception) {
+        toastOnMain(context, "Не удалось начать загрузку")
+    }
+}
+
+/** Скачивает файл и кладёт его в Pictures/OwOX или Movies/OwOX. Выполняется в фоновом потоке. */
+private fun saveMediaToGallery(context: Context, task: DownloadTask): String {
+    val connection = openConnection(task.url)
+    CookieManager.getInstance().getCookie(task.url)?.let { connection.setRequestProperty("Cookie", it) }
+    try {
+        if (connection.responseCode !in 200..299) throw IOException("сервер ответил ${connection.responseCode}")
+
+        val responseMime = connection.contentType?.substringBefore(';')?.trim()?.lowercase()
+        val mime = responseMime?.takeIf { it.startsWith("image/") || it.startsWith("video/") } ?: task.mimeType
+        val isVideo = mime.startsWith("video/")
+        val extension = (MimeTypeMap.getSingleton().getExtensionFromMimeType(mime)
+            ?: task.fileName.substringAfterLast('.', "jpg"))
+            .let { if (it == "jpeg") "jpg" else it }
+        val fileName = task.fileName.substringBeforeLast('.') + "." + extension
+        val directory = if (isVideo) Environment.DIRECTORY_MOVIES else Environment.DIRECTORY_PICTURES
+
+        connection.inputStream.use { input ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                saveViaMediaStore(context, input, directory, fileName, mime, isVideo)
+            } else {
+                saveToLegacyStorage(context, input, directory, fileName, mime)
+            }
+        }
+        return "$directory/OwOX"
+    } finally {
+        connection.disconnect()
+    }
+}
+
+/** Android 10+: запись через MediaStore, разрешения не нужны, файл сразу виден в галерее. */
+@androidx.annotation.RequiresApi(Build.VERSION_CODES.Q)
+private fun saveViaMediaStore(
+    context: Context,
+    input: InputStream,
+    directory: String,
+    fileName: String,
+    mime: String,
+    isVideo: Boolean
+) {
+    val resolver = context.contentResolver
+    val collection = if (isVideo) {
+        MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+    } else {
+        MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+    }
+    val values = ContentValues().apply {
+        put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+        put(MediaStore.MediaColumns.MIME_TYPE, mime)
+        put(MediaStore.MediaColumns.RELATIVE_PATH, "$directory/OwOX")
+        put(MediaStore.MediaColumns.IS_PENDING, 1)
+    }
+    val uri = resolver.insert(collection, values) ?: throw IOException("хранилище недоступно")
+    try {
+        val output = resolver.openOutputStream(uri) ?: throw IOException("не удалось открыть файл")
+        output.use { input.copyTo(it) }
+        values.clear()
+        values.put(MediaStore.MediaColumns.IS_PENDING, 0)
+        resolver.update(uri, values, null, null)
+    } catch (e: Exception) {
+        resolver.delete(uri, null, null)
+        throw e
+    }
+}
+
+/** Android 9 и ниже: обычный файл + явное сканирование, чтобы галерея его увидела. */
+@Suppress("DEPRECATION")
+private fun saveToLegacyStorage(
+    context: Context,
+    input: InputStream,
+    directory: String,
+    fileName: String,
+    mime: String
+) {
+    val dir = File(Environment.getExternalStoragePublicDirectory(directory), "OwOX")
+    if (!dir.exists() && !dir.mkdirs()) throw IOException("не удалось создать папку")
+    val file = File(dir, fileName)
+    file.outputStream().use { input.copyTo(it) }
+    MediaScannerConnection.scanFile(context, arrayOf(file.absolutePath), arrayOf(mime), null)
+}
+
+/** Запрос на сохранение медиа: подпись кнопки и действие. Показывается M3-панелью (см. [SaveMediaSheet]). */
+private data class SaveRequest(val label: String, val onSave: () -> Unit)
+
+/**
+ * Нижняя панель M3 (ModalBottomSheet) с одной главной кнопкой, в стиле остального клиента:
+ * цвета берутся из MaterialTheme, поэтому панель следует за темой и выбранным акцентом.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SaveMediaSheet(request: SaveRequest, onDismiss: () -> Unit) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+
+    // Сначала плавно убираем панель, и только потом убираем её из композиции
+    fun closeThen(action: () -> Unit) {
+        scope.launch { sheetState.hide() }.invokeOnCompletion {
+            onDismiss()
+            action()
+        }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilledTonalButton(
+                onClick = { closeThen(request.onSave) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+            ) {
+                Text(request.label, style = MaterialTheme.typography.labelLarge)
+            }
+            TextButton(
+                onClick = { closeThen { } },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Отмена")
+            }
+        }
+    }
+}
+
+// ───────────────────────────── Акцент внутри X ─────────────────────────────
+
+private fun loadRecentAccents(prefs: android.content.SharedPreferences): List<Int> =
+    prefs.getString(PREF_RECENT_ACCENTS, null)
+        ?.split(',')
+        ?.mapNotNull { it.trim().toIntOrNull() }
+        ?.distinct()
+        ?.take(RECENT_ACCENTS_MAX)
+        ?: emptyList()
+
+/**
+ * Перекрашивает акцентные цвета X (см. [ACCENT_SOURCES]: голубой, фиолетовый, розовый цвет лайка)
+ * в выбранный цвет.
+ *
+ * X хранит цвет в двух местах: в правилах таблиц стилей (классы вида r-xxxx) и в inline-стилях элементов.
+ * Скрипт заменяет цвет и там и там по значению, а не по именам классов, которые меняются от сборки к сборке:
+ *  - обходит все доступные таблицы стилей и переписывает совпавшие объявления;
+ *  - подменяет insertRule, чтобы правила, которые X добавляет позже, сразу получали нужный цвет;
+ *  - наблюдает за новыми элементами и стилями и перекрашивает их с задержкой (не чаще раза в 300 мс).
+ * Повторный вызов с другим цветом заменяет предыдущий. Цвет по умолчанию («как в X») возвращает
+ * исходные цвета страницы: после правок их не восстановить по значению, поэтому страница перезагружается.
+ */
+private fun accentScript(argb: Int): String {
+    val r = (argb shr 16) and 0xFF
+    val g = (argb shr 8) and 0xFF
+    val b = argb and 0xFF
+    val isDefault = (argb and 0xFFFFFF) == (DEFAULT_ACCENT.toArgb() and 0xFFFFFF)
+    val cssHex = String.format(Locale.ROOT, "#%02X%02X%02X", r, g, b)
+    val sources = ACCENT_SOURCES.joinToString(",") { "'$it'" }
+    return """
+        (function () {
+            var host = location.hostname;
+            var isX = host === 'x.com' || host === 'twitter.com' ||
+                host.endsWith('.x.com') || host.endsWith('.twitter.com');
+            if (!isX) return;
+
+            var SOURCES = [$sources];
+            var next = '$r, $g, $b';
+            var reset = $isDefault;
+
+            // Цвет контейнера для меню совпадает с выбранным акцентом приложения.
+            document.documentElement.style.setProperty('--owox-accent', '$cssHex');
+
+            var st = window.__owoxAccent;
+            if (!st) {
+                st = window.__owoxAccent = { cur: null, patched: false, observing: false, dirty: false, timer: 0 };
+            }
+
+            if (reset) {
+                // Исходные цвета страницы уже затёрты: единственный способ их вернуть, это перезагрузка
+                if (st.cur) { st.cur = null; location.reload(); }
+                return;
+            }
+
+            // Одно регулярное выражение на все цвета из списка: «r,\s*g,\s*b|r,\s*g,\s*b|…»
+            function reFor(list) {
+                return new RegExp(list.map(function (triplet) {
+                    return triplet.split(',').map(function (s) { return s.trim(); }).join(',\\s*');
+                }).join('|'), 'g');
+            }
+            var SOURCES_RE = reFor(SOURCES);
+
+            function swapRule(rule, re, to) {
+                if (rule.cssRules) {
+                    for (var i = 0; i < rule.cssRules.length; i++) swapRule(rule.cssRules[i], re, to);
+                }
+                var style = rule.style;
+                if (!style) return;
+                re.lastIndex = 0;
+                if (!re.test(style.cssText)) return;
+                for (var j = 0; j < style.length; j++) {
+                    var prop = style[j];
+                    var value = style.getPropertyValue(prop);
+                    re.lastIndex = 0;
+                    if (re.test(value)) {
+                        style.setProperty(prop, value.replace(re, to), style.getPropertyPriority(prop));
+                    }
+                }
+            }
+
+            function swapSheets(from, to) {
+                var re = reFor(from);
+                var sheets = document.styleSheets;
+                for (var i = 0; i < sheets.length; i++) {
+                    var rules;
+                    try { rules = sheets[i].cssRules; } catch (e) { continue; } // чужой домен без CORS
+                    if (!rules) continue;
+                    for (var j = 0; j < rules.length; j++) {
+                        try { swapRule(rules[j], re, to); } catch (e) {}
+                    }
+                }
+            }
+
+            function swapInline(from, to) {
+                var re = reFor(from);
+                var selectors = [];
+                from.forEach(function (triplet) {
+                    selectors.push('[style*="' + triplet + '"]');
+                    selectors.push('[style*="' + triplet.replace(/, /g, ',') + '"]');
+                });
+                var els = document.querySelectorAll(selectors.join(','));
+                for (var i = 0; i < els.length; i++) {
+                    var attr = els[i].getAttribute('style');
+                    if (!attr) continue;
+                    var fixed = attr.replace(re, to);
+                    if (fixed !== attr) els[i].setAttribute('style', fixed);
+                }
+            }
+
+            // Правила, которые X добавляет уже после нас, получают выбранный цвет сразу
+            if (!st.patched) {
+                st.patched = true;
+                var originalInsert = CSSStyleSheet.prototype.insertRule;
+                CSSStyleSheet.prototype.insertRule = function (rule, index) {
+                    if (st.cur && typeof rule === 'string') rule = rule.replace(SOURCES_RE, st.cur);
+                    return originalInsert.call(this, rule, index);
+                };
+            }
+
+            function schedule() {
+                if (st.timer) return;
+                st.timer = setTimeout(function () {
+                    st.timer = 0;
+                    if (!st.cur) return;
+                    if (st.dirty) { st.dirty = false; swapSheets(SOURCES, st.cur); }
+                    swapInline(SOURCES, st.cur);
+                }, 300);
+            }
+
+            if (!st.observing) {
+                st.observing = true;
+                new MutationObserver(function (records) {
+                    for (var i = 0; i < records.length; i++) {
+                        var added = records[i].addedNodes;
+                        for (var j = 0; added && j < added.length; j++) {
+                            var tag = added[j].tagName;
+                            if (tag === 'STYLE' || tag === 'LINK') st.dirty = true;
+                        }
+                    }
+                    schedule();
+                }).observe(document.documentElement, {
+                    childList: true, subtree: true, attributes: true, attributeFilter: ['style']
+                });
+            }
+
+            // Что перекрашивать: исходные цвета X и, если акцент уже менялся, прошлый выбранный цвет
+            var prev = st.cur;
+            st.cur = next;
+            var from = (prev && prev !== next) ? [prev].concat(SOURCES) : SOURCES;
+            swapSheets(from, next);
+            swapInline(from, next);
+            st.dirty = true; // новые таблицы стилей могли появиться с прошлого вызова
+            schedule();
+        })();
+    """.trimIndent()
+}
+
+// ───────────────────────────── Свой шрифт ─────────────────────────────
+
+/** Виртуальный адрес шрифта внутри страниц X: запрос перехватывается и отдаётся из файла (см. shouldInterceptRequest). */
+private const val FONT_URL_PATH = "/__owox_font"
+private const val FONT_MAX_BYTES = 25L * 1024 * 1024
+
+private data class CustomFont(val name: String, val version: Long)
+
+/** Единственная копия выбранного шрифта во внутреннем хранилище приложения. */
+private fun fontFile(context: Context) = File(context.filesDir, "custom_font.bin")
+private fun backgroundImageFile(context: Context) = File(context.filesDir, BACKGROUND_IMAGE_FILE)
+
+private const val BACKGROUND_IMAGE_MAX_BYTES = 40L * 1024 * 1024
+
+/** Копирует выбранное изображение в приватное хранилище приложения и проверяет, что оно декодируется. */
+private fun importBackgroundImage(context: Context, uri: Uri): File {
+    val target = backgroundImageFile(context)
+    val temporary = File(context.filesDir, "$BACKGROUND_IMAGE_FILE.tmp")
+    val previous = File(context.filesDir, "$BACKGROUND_IMAGE_FILE.previous")
+    try {
+        var total = 0L
+        context.contentResolver.openInputStream(uri)?.use { input ->
+            temporary.outputStream().use { output ->
+                val buffer = ByteArray(32 * 1024)
+                while (true) {
+                    val count = input.read(buffer)
+                    if (count < 0) break
+                    total += count
+                    if (total > BACKGROUND_IMAGE_MAX_BYTES) throw IOException("изображение больше 40 МБ")
+                    output.write(buffer, 0, count)
+                }
+            }
+        } ?: throw IOException("не удалось открыть файл")
+
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(temporary.absolutePath, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) throw IOException("файл не является изображением")
+        if (previous.exists()) previous.delete()
+        if (target.exists() && !target.renameTo(previous)) throw IOException("не удалось заменить фон")
+        if (!temporary.renameTo(target)) {
+            previous.renameTo(target)
+            throw IOException("не удалось сохранить изображение")
+        }
+        previous.delete()
+        return target
+    } finally {
+        if (temporary.exists()) temporary.delete()
+    }
+}
+
+/** Загружает уменьшенную копию для Compose; исходный файл остаётся в полном разрешении. */
+private fun decodeBackgroundPreview(file: File, targetWidth: Int, targetHeight: Int): ImageBitmap? {
+    if (!file.exists()) return null
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeFile(file.absolutePath, bounds)
+    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+    var sample = 1
+    while (bounds.outWidth / sample > targetWidth * 2 || bounds.outHeight / sample > targetHeight * 2) {
+        sample *= 2
+    }
+    val options = BitmapFactory.Options().apply { inSampleSize = sample }
+    return BitmapFactory.decodeFile(file.absolutePath, options)?.asImageBitmap()
+}
+
+private fun writeBackupEntry(zip: ZipOutputStream, name: String, file: File) {
+    if (!file.exists()) return
+    zip.putNextEntry(ZipEntry(name))
+    file.inputStream().use { it.copyTo(zip) }
+    zip.closeEntry()
+}
+
+private fun exportSettingsBackup(context: Context, prefs: android.content.SharedPreferences, uri: Uri) {
+    val settings = JSONObject()
+    prefs.all.forEach { (key, value) ->
+        when (value) {
+            is String -> settings.put(key, value)
+            is Int -> settings.put(key, value)
+            is Long -> settings.put(key, value)
+            is Boolean -> settings.put(key, value)
+            is Float -> settings.put(key, value.toDouble())
+        }
+    }
+    context.contentResolver.openOutputStream(uri)?.use { stream ->
+        ZipOutputStream(stream).use { zip ->
+            zip.putNextEntry(ZipEntry("settings.json"))
+            zip.write(settings.toString().toByteArray(Charsets.UTF_8))
+            zip.closeEntry()
+            writeBackupEntry(zip, "custom_font.bin", fontFile(context))
+            writeBackupEntry(zip, BACKGROUND_IMAGE_FILE, backgroundImageFile(context))
+        }
+    } ?: throw IOException("не удалось создать файл резервной копии")
+}
+
+private fun importSettingsBackup(context: Context, prefs: android.content.SharedPreferences, uri: Uri) {
+    val settingsJson = StringBuilder()
+    var foundSettings = false
+    val fontTarget = fontFile(context)
+    val backgroundTarget = backgroundImageFile(context)
+    val fontTemp = File(context.filesDir, "backup_font.tmp")
+    val backgroundTemp = File(context.filesDir, "backup_background.tmp")
+    var hasFont = false
+    var hasBackground = false
+    try {
+        context.contentResolver.openInputStream(uri)?.use { source ->
+            ZipInputStream(source).use { zip ->
+                val buffer = ByteArray(16 * 1024)
+                while (true) {
+                    val entry = zip.nextEntry ?: break
+                    val target = when (entry.name) {
+                        "settings.json" -> null
+                        "custom_font.bin" -> fontTemp.also { hasFont = true }
+                        BACKGROUND_IMAGE_FILE -> backgroundTemp.also { hasBackground = true }
+                        else -> null
+                    }
+                    if (entry.name == "settings.json") {
+                        foundSettings = true
+                        val bytes = zip.readBytes()
+                        if (bytes.size > 1024 * 1024) throw IOException("файл настроек слишком большой")
+                        settingsJson.append(String(bytes, Charsets.UTF_8))
+                    } else if (target != null) {
+                        target.outputStream().use { output ->
+                            var total = 0L
+                            while (true) {
+                                val count = zip.read(buffer)
+                                if (count < 0) break
+                                total += count
+                                if (total > BACKGROUND_IMAGE_MAX_BYTES) throw IOException("файл в резервной копии слишком большой")
+                                output.write(buffer, 0, count)
+                            }
+                        }
+                    }
+                    zip.closeEntry()
+                }
+            }
+        } ?: throw IOException("не удалось открыть резервную копию")
+        if (!foundSettings) throw IOException("в архиве нет настроек OwOX")
+        val settings = JSONObject(settingsJson.toString())
+        if (hasFont && !hasFontSignature(fontTemp)) throw IOException("шрифт в резервной копии повреждён")
+        if (hasBackground) {
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeFile(backgroundTemp.absolutePath, bounds)
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) throw IOException("фоновое изображение повреждено")
+        }
+        val editor = prefs.edit().clear()
+        settings.keys().forEach { key ->
+            val value = settings.get(key)
+            when (value) {
+                is Int -> editor.putInt(key, value)
+                is Long -> editor.putLong(key, value)
+                is Boolean -> editor.putBoolean(key, value)
+                is String -> editor.putString(key, value)
+                is Double -> editor.putInt(key, value.toInt())
+            }
+        }
+        if (hasFont) {
+            if (fontTarget.exists()) fontTarget.delete()
+            if (!fontTemp.renameTo(fontTarget)) throw IOException("не удалось восстановить шрифт")
+        } else fontTarget.delete()
+        if (hasBackground) {
+            if (backgroundTarget.exists()) backgroundTarget.delete()
+            if (!backgroundTemp.renameTo(backgroundTarget)) throw IOException("не удалось восстановить фон")
+        } else backgroundTarget.delete()
+        editor.apply()
+    } finally {
+        fontTemp.delete()
+        backgroundTemp.delete()
+    }
+}
+
+private fun loadSavedFont(context: Context, prefs: android.content.SharedPreferences): CustomFont? {
+    val version = prefs.getLong(PREF_FONT_VERSION, 0L)
+    val name = prefs.getString(PREF_FONT_NAME, null)
+    return if (version > 0 && name != null && fontFile(context).exists()) CustomFont(name, version) else null
+}
+
+private fun loadTypeface(context: Context): Typeface? =
+    runCatching { Typeface.createFromFile(fontFile(context)) }.getOrNull()
+
+private fun appBackgroundScript(enabled: Boolean): String = if (enabled) {
+    """(function(){if(location.hostname!=='x.com'&&!location.hostname.endsWith('.x.com')&&location.hostname!=='twitter.com'&&!location.hostname.endsWith('.twitter.com'))return;var id='owox-background-transparency';var s=document.getElementById(id);if(!s){s=document.createElement('style');s.id=id;(document.head||document.documentElement).appendChild(s);}s.textContent='html,body,#react-root,#react-root>div,[data-testid="primaryColumn"]{background-color:transparent!important;}';})();"""
+} else {
+    """(function(){var s=document.getElementById('owox-background-transparency');if(s)s.remove();})();"""
+}
+
+private fun parallaxScript(strength: Int): String = """
+    (function () {
+        var host = location.hostname;
+        if (host !== 'x.com' && host !== 'twitter.com' && !host.endsWith('.x.com') && !host.endsWith('.twitter.com')) return;
+        var state = window.__owoxParallax;
+        if (!state) {
+            state = { last: new WeakMap(), timer: 0 };
+            state.restore = function () {
+                document.querySelectorAll('article[data-testid="tweet"][data-owox-parallax-active="1"]').forEach(function (post) {
+                    var oldTransform = post.getAttribute('data-owox-parallax-transform');
+                    var oldTransition = post.getAttribute('data-owox-parallax-transition');
+                    if (oldTransform) post.style.setProperty('transform', oldTransform, post.getAttribute('data-owox-parallax-transform-priority') || '');
+                    else post.style.removeProperty('transform');
+                    if (oldTransition) post.style.setProperty('transition', oldTransition, post.getAttribute('data-owox-parallax-transition-priority') || '');
+                    else post.style.removeProperty('transition');
+                    post.removeAttribute('data-owox-parallax-active');
+                    post.removeAttribute('data-owox-parallax-transform');
+                    post.removeAttribute('data-owox-parallax-transform-priority');
+                    post.removeAttribute('data-owox-parallax-transition');
+                    post.removeAttribute('data-owox-parallax-transition-priority');
+                });
+            };
+            state.onScroll = function (event) {
+                var source = event.target;
+                if (!source || source === document || source === window) source = document.scrollingElement || document.documentElement;
+                var current = source && typeof source.scrollTop === 'number' ? source.scrollTop : (window.scrollY || window.pageYOffset || 0);
+                if (source === document.scrollingElement || source === document.documentElement || source === document.body) {
+                    current = window.scrollY || window.pageYOffset || current;
+                }
+                var previous = state.last.has(source) ? state.last.get(source) : current;
+                state.last.set(source, current);
+                var delta = current - previous;
+                var strength = window.__owoxParallaxStrength || 0;
+                if (!delta || !strength) return;
+                var offset = (delta > 0 ? 1 : -1) * Math.min(30, strength * 0.30);
+                document.querySelectorAll('article[data-testid="tweet"]').forEach(function (post) {
+                    if (post.getAttribute('data-owox-parallax-active') !== '1') {
+                        post.setAttribute('data-owox-parallax-active', '1');
+                        post.setAttribute('data-owox-parallax-transform', post.style.getPropertyValue('transform'));
+                        post.setAttribute('data-owox-parallax-transform-priority', post.style.getPropertyPriority('transform'));
+                        post.setAttribute('data-owox-parallax-transition', post.style.getPropertyValue('transition'));
+                        post.setAttribute('data-owox-parallax-transition-priority', post.style.getPropertyPriority('transition'));
+                    }
+                    post.style.setProperty('transition', 'transform 130ms cubic-bezier(.2,0,0,1)', 'important');
+                    post.style.setProperty('transform', 'translate3d(0,' + offset + 'px,0)', 'important');
+                });
+                window.clearTimeout(state.timer);
+                state.timer = window.setTimeout(state.restore, 180);
+            };
+            window.addEventListener('scroll', state.onScroll, { capture: true, passive: true });
+            window.__owoxParallax = state;
+        }
+        window.__owoxParallaxStrength = $strength;
+        if (!$strength) state.restore();
+    })();
+""".trimIndent()
+
+/** TrueType (0x00010000, «true»), OpenType («OTTO») или коллекция («ttcf»). WOFF Android не поддерживает. */
+private fun hasFontSignature(file: File): Boolean {
+    val head = ByteArray(4)
+    file.inputStream().use { if (it.read(head) < 4) return false }
+    val tag = String(head, Charsets.ISO_8859_1)
+    val isTrueType = head[0] == 0.toByte() && head[1] == 1.toByte() && head[2] == 0.toByte() && head[3] == 0.toByte()
+    return isTrueType || tag == "OTTO" || tag == "true" || tag == "ttcf"
+}
+
+private fun displayName(resolver: ContentResolver, uri: Uri): String {
+    val raw = runCatching {
+        resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) cursor.getString(0) else null
+        }
+    }.getOrNull()
+    return (raw ?: uri.lastPathSegment ?: "Свой шрифт").substringBeforeLast('.')
+}
+
+/**
+ * Копирует выбранный файл во внутреннее хранилище (доступ к исходному файлу после этого не нужен),
+ * проверяет сигнатуру и пробной загрузкой убеждается, что шрифт читается. Выполняется в фоновом потоке.
+ */
+private fun importFontFile(context: Context, uri: Uri): CustomFont {
+    val resolver = context.contentResolver
+    val tmp = File(context.filesDir, "custom_font.tmp")
+    try {
+        var total = 0L
+        resolver.openInputStream(uri)?.use { input ->
+            tmp.outputStream().use { output ->
+                val buffer = ByteArray(16 * 1024)
+                while (true) {
+                    val read = input.read(buffer)
+                    if (read < 0) break
+                    total += read
+                    if (total > FONT_MAX_BYTES) throw IOException("файл больше 25 МБ")
+                    output.write(buffer, 0, read)
+                }
+            }
+        } ?: throw IOException("не удалось открыть файл")
+
+        if (!hasFontSignature(tmp)) throw IOException("нужен файл .ttf, .otf или .ttc")
+        val typeface = try {
+            Typeface.createFromFile(tmp)
+        } catch (_: Exception) {
+            null
+        }
+        if (typeface == null) throw IOException("шрифт повреждён")
+
+        val target = fontFile(context)
+        if (target.exists()) target.delete()
+        if (!tmp.renameTo(target)) throw IOException("не удалось сохранить шрифт")
+        return CustomFont(displayName(resolver, uri), System.currentTimeMillis())
+    } finally {
+        if (tmp.exists()) tmp.delete()
+    }
+}
+
+/**
+ * Подменяет шрифт на страницах X: @font-face с виртуальным адресом + правило для всех элементов.
+ * Версия в адресе сбрасывает кэш при смене файла. version = 0 убирает подмену.
+ * Скрипт идемпотентен: старый <style> заменяется, поэтому смена шрифта применяется без перезагрузки.
+ */
+private fun fontScript(version: Long): String {
+    val css = if (version > 0) {
+        """@font-face{font-family:"OwOXFont";src:url("$FONT_URL_PATH?v=$version");font-display:swap;}""" +
+                """body,body *{font-family:"OwOXFont",sans-serif !important;}"""
+    } else {
+        ""
+    }
+    return """
+        (function () {
+            var host = location.hostname;
+            var isX = host === 'x.com' || host === 'twitter.com' ||
+                host.endsWith('.x.com') || host.endsWith('.twitter.com');
+            if (!isX) return;
+            var old = document.getElementById('owox-font');
+            if (old) old.remove();
+            var css = '$css';
+            if (!css) return;
+            var style = document.createElement('style');
+            style.id = 'owox-font';
+            style.textContent = css;
+            (document.head || document.documentElement).appendChild(style);
+        })();
+    """.trimIndent()
+}
+
+/** Один и тот же шрифт для всех 15 стилей Material 3, чтобы он применился ко всему интерфейсу. */
+private fun Typography.withFontFamily(family: FontFamily) = copy(
+    displayLarge = displayLarge.copy(fontFamily = family),
+    displayMedium = displayMedium.copy(fontFamily = family),
+    displaySmall = displaySmall.copy(fontFamily = family),
+    headlineLarge = headlineLarge.copy(fontFamily = family),
+    headlineMedium = headlineMedium.copy(fontFamily = family),
+    headlineSmall = headlineSmall.copy(fontFamily = family),
+    titleLarge = titleLarge.copy(fontFamily = family),
+    titleMedium = titleMedium.copy(fontFamily = family),
+    titleSmall = titleSmall.copy(fontFamily = family),
+    bodyLarge = bodyLarge.copy(fontFamily = family),
+    bodyMedium = bodyMedium.copy(fontFamily = family),
+    bodySmall = bodySmall.copy(fontFamily = family),
+    labelLarge = labelLarge.copy(fontFamily = family),
+    labelMedium = labelMedium.copy(fontFamily = family),
+    labelSmall = labelSmall.copy(fontFamily = family)
+)
+
+// ───────────────────────────── Activity и корень ─────────────────────────────
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        volumeControlStream = AudioManager.STREAM_MUSIC
+        setContent {
+            OwOXRoot()
+        }
+    }
+}
+
+@Composable
+fun OwOXRoot() {
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("owox_settings", Context.MODE_PRIVATE) }
+    var currentTheme by remember {
+        mutableStateOf(AppThemeMode.fromId(prefs.getInt("theme_mode", AppThemeMode.BLACK.id)))
+    }
+    var accent by remember {
+        mutableStateOf(Color(prefs.getInt(PREF_ACCENT, DEFAULT_ACCENT.toArgb())))
+    }
+
+    var textScale by remember {
+        mutableIntStateOf(
+            prefs.getInt(PREF_TEXT_SCALE, TEXT_SCALE_DEFAULT).coerceIn(TEXT_SCALE_MIN, TEXT_SCALE_MAX)
+        )
+    }
+    var parallaxStrength by remember {
+        mutableIntStateOf(prefs.getInt(PREF_PARALLAX_STRENGTH, 35).coerceIn(0, 100))
+    }
+    var customFont by remember { mutableStateOf(loadSavedFont(context, prefs)) }
+    var recentAccents by remember { mutableStateOf(loadRecentAccents(prefs)) }
+    var appBackgroundPath by remember {
+        mutableStateOf(backgroundImageFile(context).takeIf { it.exists() }?.absolutePath)
+    }
+    var appBackgroundRevision by remember {
+        mutableLongStateOf(backgroundImageFile(context).takeIf { it.exists() }?.lastModified() ?: 0L)
+    }
+
+    fun setAccent(color: Color) {
+        accent = color
+        prefs.edit().putInt(PREF_ACCENT, color.toArgb()).apply()
+    }
+
+    // Порядок стабильный: цвет, который уже есть в списке, не двигается, новый встаёт первым.
+    // Исходный голубой X не сохраняется: вернуться к нему можно кнопкой «Сбросить».
+    fun pushRecent(argb: Int) {
+        if (argb == DEFAULT_ACCENT.toArgb() || argb in recentAccents) return
+        val updated = (listOf(argb) + recentAccents).take(RECENT_ACCENTS_MAX)
+        recentAccents = updated
+        prefs.edit().putString(PREF_RECENT_ACCENTS, updated.joinToString(",")).apply()
+    }
+
+    // Слайдер даёт десятки промежуточных значений, поэтому цвет считается недавним,
+    // только если пользователь задержался на нём больше секунды
+    LaunchedEffect(accent) {
+        delay(1200)
+        pushRecent(accent.toArgb())
+    }
+
+    val colorScheme = remember(currentTheme, accent) { currentTheme.toColorScheme(accent) }
+    val typography = remember(customFont?.version) {
+        val typeface = if (customFont != null) loadTypeface(context) else null
+        if (typeface != null) Typography().withFontFamily(FontFamily(typeface)) else Typography()
+    }
+
+    val appContext = context.applicationContext
+    val importFont: (Uri) -> Unit = { uri ->
+        ioExecutor.execute {
+            val result = runCatching { importFontFile(appContext, uri) }
+            mainHandler.post {
+                result.onSuccess { font ->
+                    customFont = font
+                    prefs.edit()
+                        .putLong(PREF_FONT_VERSION, font.version)
+                        .putString(PREF_FONT_NAME, font.name)
+                        .apply()
+                }.onFailure { error ->
+                    Toast.makeText(
+                        appContext,
+                        "Не удалось загрузить шрифт: ${error.message ?: "неподдерживаемый файл"}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+    }
+    val resetFont: () -> Unit = {
+        fontFile(appContext).delete()
+        customFont = null
+        prefs.edit().remove(PREF_FONT_VERSION).remove(PREF_FONT_NAME).apply()
+    }
+    val importBackground: (Uri) -> Unit = { uri ->
+        ioExecutor.execute {
+            val result = runCatching { importBackgroundImage(appContext, uri) }
+            mainHandler.post {
+                result.onSuccess {
+                    appBackgroundPath = it.absolutePath
+                    appBackgroundRevision = System.currentTimeMillis()
+                }
+                    .onFailure { error ->
+                        Toast.makeText(appContext, "Не удалось установить фон: ${error.message ?: "неподдерживаемое изображение"}", Toast.LENGTH_LONG).show()
+                    }
+            }
+        }
+    }
+    val resetBackground: () -> Unit = {
+        backgroundImageFile(appContext).delete()
+        appBackgroundPath = null
+        appBackgroundRevision = 0L
+    }
+    val exportBackup: (Uri) -> Unit = { uri ->
+        ioExecutor.execute {
+            val result = runCatching { exportSettingsBackup(appContext, prefs, uri) }
+            mainHandler.post {
+                result.onSuccess { Toast.makeText(appContext, "Резервная копия сохранена", Toast.LENGTH_SHORT).show() }
+                    .onFailure { Toast.makeText(appContext, "Не удалось сохранить копию: ${it.message}", Toast.LENGTH_LONG).show() }
+            }
+        }
+    }
+    val importBackup: (Uri) -> Unit = { uri ->
+        ioExecutor.execute {
+            val result = runCatching { importSettingsBackup(appContext, prefs, uri) }
+            mainHandler.post {
+                result.onSuccess {
+                    currentTheme = AppThemeMode.fromId(prefs.getInt("theme_mode", AppThemeMode.BLACK.id))
+                    applyThemeCookies(currentTheme)
+                    accent = Color(prefs.getInt(PREF_ACCENT, DEFAULT_ACCENT.toArgb()))
+                    textScale = prefs.getInt(PREF_TEXT_SCALE, TEXT_SCALE_DEFAULT).coerceIn(TEXT_SCALE_MIN, TEXT_SCALE_MAX)
+                    parallaxStrength = prefs.getInt(PREF_PARALLAX_STRENGTH, 35).coerceIn(0, 100)
+                    customFont = loadSavedFont(appContext, prefs)
+                    recentAccents = loadRecentAccents(prefs)
+                    appBackgroundPath = backgroundImageFile(appContext).takeIf { it.exists() }?.absolutePath
+                    appBackgroundRevision = System.currentTimeMillis()
+                    Toast.makeText(appContext, "Настройки восстановлены", Toast.LENGTH_SHORT).show()
+                }.onFailure { Toast.makeText(appContext, "Не удалось восстановить копию: ${it.message}", Toast.LENGTH_LONG).show() }
+            }
+        }
+    }
+
+    MaterialTheme(colorScheme = colorScheme, typography = typography) {
+        OwOXApp(
+            currentTheme = currentTheme,
+            onThemeChange = { newTheme ->
+                currentTheme = newTheme
+                prefs.edit().putInt("theme_mode", newTheme.id).apply()
+            },
+            accent = accent,
+            onAccentChange = { setAccent(it) },
+            recentAccents = recentAccents.map { Color(it) },
+            // Выбор из недавних или сброс: текущий цвет сначала сохраняется, чтобы к нему можно было вернуться
+            onAccentPick = { color ->
+                pushRecent(accent.toArgb())
+                setAccent(color)
+            },
+            textScale = textScale,
+            parallaxStrength = parallaxStrength,
+            onParallaxStrengthChange = { value ->
+                parallaxStrength = value.coerceIn(0, 100)
+                prefs.edit().putInt(PREF_PARALLAX_STRENGTH, parallaxStrength).apply()
+            },
+            onTextScaleChange = { value ->
+                if (value != textScale) {
+                    textScale = value
+                    prefs.edit().putInt(PREF_TEXT_SCALE, value).apply()
+                }
+            },
+            fontName = customFont?.name,
+            fontVersion = customFont?.version ?: 0L,
+            onFontImport = importFont,
+            onFontReset = resetFont,
+            backgroundImagePath = appBackgroundPath,
+            backgroundImageRevision = appBackgroundRevision,
+            onBackgroundImport = importBackground,
+            onBackgroundReset = resetBackground,
+            onExportBackup = exportBackup,
+            onImportBackup = importBackup
+        )
+    }
+}
+
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+fun OwOXApp(
+    currentTheme: AppThemeMode,
+    onThemeChange: (AppThemeMode) -> Unit,
+    accent: Color,
+    onAccentChange: (Color) -> Unit,
+    recentAccents: List<Color>,
+    onAccentPick: (Color) -> Unit,
+    textScale: Int,
+    parallaxStrength: Int,
+    onParallaxStrengthChange: (Int) -> Unit,
+    onTextScaleChange: (Int) -> Unit,
+    fontName: String?,
+    fontVersion: Long,
+    onFontImport: (Uri) -> Unit,
+    onFontReset: () -> Unit,
+    backgroundImagePath: String?,
+    backgroundImageRevision: Long,
+    onBackgroundImport: (Uri) -> Unit,
+    onBackgroundReset: () -> Unit,
+    onExportBackup: (Uri) -> Unit,
+    onImportBackup: (Uri) -> Unit
+) {
+    val context = LocalContext.current
+
+    var webView by remember { mutableStateOf<WebView?>(null) }
+    var canGoBack by remember { mutableStateOf(false) }
+    var loadProgress by remember { mutableIntStateOf(0) }
+    var notificationBadge by remember { mutableIntStateOf(0) }
+    var messageBadge by remember { mutableIntStateOf(0) }
+    var webOverlayOpen by remember { mutableStateOf(false) }
+    var saveRequest by remember { mutableStateOf<SaveRequest?>(null) }
+
+    // Вкладка веб-части и экран настроек хранятся отдельно: из настроек
+    // можно вернуться ровно туда, где пользователь был.
+    var webTab by rememberSaveable { mutableStateOf(0) }
+    var showSettings by rememberSaveable { mutableStateOf(false) }
+
+    val fileChooser = remember { FileChooserHolder() }
+    val pendingDownload = remember { PendingDownloadHolder() }
+
+    // Клиент WebView создаётся один раз, поэтому актуальную версию шрифта он читает из этого состояния
+    val fontVersionState = rememberUpdatedState(fontVersion)
+    val parallaxStrengthState = rememberUpdatedState(parallaxStrength)
+    val hasBackgroundImage = backgroundImagePath != null
+    val hasBackgroundImageState = rememberUpdatedState(hasBackgroundImage)
+
+    val backgroundPickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri -> if (uri != null) onBackgroundImport(uri) }
+    val backupExportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri -> if (uri != null) onExportBackup(uri) }
+    val backupImportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri -> if (uri != null) onImportBackup(uri) }
+
+    LaunchedEffect(hasBackgroundImage, webView) {
+        webView?.let { view ->
+            view.setBackgroundColor(if (hasBackgroundImage) android.graphics.Color.TRANSPARENT else currentTheme.webViewColor)
+            view.evaluateJavascript(appBackgroundScript(hasBackgroundImage), null)
+        }
+    }
+
+    // «*/*»: системные пикеры плохо знают MIME-типы шрифтов, формат проверяется по содержимому
+    val fontPickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) onFontImport(uri)
+    }
+
+    // Смена шрифта применяется на открытой странице сразу, без перезагрузки
+    LaunchedEffect(fontVersion, webView) {
+        webView?.evaluateJavascript(fontScript(fontVersion), null)
+    }
+
+    LaunchedEffect(parallaxStrength, webView) {
+        webView?.evaluateJavascript(parallaxScript(parallaxStrength), null)
+    }
+
+    // Цвет акцента для самого X. Применяется с задержкой: слайдер даёт десятки значений в секунду,
+    // а перекраска обходит все правила стилей страницы
+    val accentState = rememberUpdatedState(accent.toArgb())
+    LaunchedEffect(accent, webView) {
+        delay(400)
+        webView?.evaluateJavascript(accentScript(accent.toArgb()), null)
+    }
+
+    // Выбор файлов для вложений в твиты
+    val fileChooserLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        fileChooser.callback?.onReceiveValue(
+            WebChromeClient.FileChooserParams.parseResult(result.resultCode, result.data)
+        )
+        fileChooser.callback = null
+    }
+
+    // Разрешение на запись нужно только на Android 9 и ниже
+    val storagePermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        val task = pendingDownload.task
+        pendingDownload.task = null
+        if (granted && task != null) {
+            enqueueDownload(context, task)
+        } else {
+            Toast.makeText(context, "Нет разрешения на сохранение файлов", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun startDownload(task: DownloadTask) {
+        if (task.probe == null && !task.url.startsWith("http", ignoreCase = true)) {
+            Toast.makeText(context, "Этот файл нельзя скачать", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val needsPermission = Build.VERSION.SDK_INT <= Build.VERSION_CODES.P &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+                PackageManager.PERMISSION_GRANTED
+        if (needsPermission) {
+            pendingDownload.task = task
+            storagePermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        } else {
+            enqueueDownload(context, task)
+        }
+    }
+
+    fun applyTheme(theme: AppThemeMode) {
+        applyThemeCookies(theme)
+        webView?.apply {
+            setBackgroundColor(if (backgroundImagePath != null) android.graphics.Color.TRANSPARENT else theme.webViewColor)
+            reload()
+        }
+    }
+
+    // Пауза WebView вместе с приложением: останавливает таймеры, анимации и звук в фоне
+    val lifecycle = (context as? ComponentActivity)?.lifecycle
+    DisposableEffect(lifecycle) {
+        if (lifecycle == null) return@DisposableEffect onDispose { }
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> webView?.onPause()
+                Lifecycle.Event.ON_RESUME -> webView?.onResume()
+                else -> Unit
+            }
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
+    }
+
+    // Из настроек «Назад» возвращает в ленту, иначе листает историю WebView
+    BackHandler(enabled = showSettings || canGoBack) {
+        if (showSettings) showSettings = false else webView?.goBack()
+    }
+
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        bottomBar = {}
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    top = innerPadding.calculateTopPadding(),
+                    bottom = if (showSettings) innerPadding.calculateBottomPadding() else 0.dp
+                )
+                .consumeWindowInsets(innerPadding)
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            if (backgroundImagePath != null) {
+                AppBackgroundImage(
+                    path = backgroundImagePath,
+                    revision = backgroundImageRevision,
+                    modifier = Modifier.fillMaxSize(),
+                    dim = if (currentTheme.isDark) 0.28f else 0.16f
+                )
+            }
+            // WebView всегда живёт в фоне, чтобы не терять позицию скролла при заходе в настройки
+            Column(modifier = Modifier.fillMaxSize()) {
+                LoadProgressBar(progress = { loadProgress }, visible = !showSettings)
+
+                AndroidView(
+                    modifier = Modifier.fillMaxSize(),
+                    factory = { ctx ->
+                        applyThemeCookies(currentTheme)
+
+                        WebView(ctx).apply {
+                            layoutParams = ViewGroup.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.MATCH_PARENT
+                            )
+                            setBackgroundColor(if (backgroundImagePath != null) android.graphics.Color.TRANSPARENT else currentTheme.webViewColor)
+                            CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
+
+                            settings.apply {
+                                javaScriptEnabled = true
+                                domStorageEnabled = true
+                                useWideViewPort = true
+                                loadWithOverviewMode = true
+                                mediaPlaybackRequiresUserGesture = false
+                                javaScriptCanOpenWindowsAutomatically = true
+                                setSupportMultipleWindows(true)
+                                userAgentString = CHROME_UA
+                                textZoom = textScale
+                            }
+
+                            // Счётчики непрочитанного приходят из страницы (см. CORE_SCRIPT)
+                            addJavascriptInterface(
+                                OwOXBridge(
+                                    badgeListener = { notifications, messages ->
+                                        if (notifications >= 0) notificationBadge = notifications
+                                        if (messages >= 0) messageBadge = messages
+                                    },
+                                    overlayListener = { webOverlayOpen = it }
+                                ),
+                                "OwOXNative"
+                            )
+
+                            webChromeClient = object : WebChromeClient() {
+                                override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                                    loadProgress = newProgress
+                                }
+
+                                override fun onShowFileChooser(
+                                    view: WebView?,
+                                    callback: ValueCallback<Array<Uri>>?,
+                                    params: FileChooserParams?
+                                ): Boolean {
+                                    if (callback == null || params == null) return false
+                                    // Предыдущий незавершённый запрос нужно обязательно закрыть
+                                    fileChooser.callback?.onReceiveValue(null)
+                                    fileChooser.callback = callback
+                                    try {
+                                        fileChooserLauncher.launch(params.createIntent())
+                                    } catch (_: Exception) {
+                                        fileChooser.callback = null
+                                        callback.onReceiveValue(null)
+                                    }
+                                    return true
+                                }
+
+                                override fun onCreateWindow(
+                                    view: WebView?,
+                                    isDialog: Boolean,
+                                    isUserGesture: Boolean,
+                                    resultMsg: Message?
+                                ): Boolean {
+                                    val msg = resultMsg ?: return false
+                                    val transport = msg.obj as? WebView.WebViewTransport ?: return false
+
+                                    val dialog = Dialog(ctx, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
+                                    val popupWebView = WebView(ctx).apply {
+                                        settings.apply {
+                                            javaScriptEnabled = true
+                                            domStorageEnabled = true
+                                            javaScriptCanOpenWindowsAutomatically = true
+                                            setSupportMultipleWindows(true)
+                                            userAgentString = CHROME_UA
+                                        }
+                                        CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
+                                        webViewClient = WebViewClient()
+                                        webChromeClient = object : WebChromeClient() {
+                                            override fun onCloseWindow(window: WebView?) {
+                                                dialog.dismiss() // WebView уничтожится в OnDismissListener
+                                            }
+                                        }
+                                    }
+
+                                    dialog.setContentView(popupWebView)
+                                    dialog.setOnDismissListener { popupWebView.destroy() }
+                                    dialog.show()
+
+                                    transport.webView = popupWebView
+                                    msg.sendToTarget()
+                                    return true
+                                }
+                            }
+
+                            webViewClient = object : WebViewClient() {
+                                override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
+                                    super.onPageStarted(view, url, favicon)
+                                    view.evaluateJavascript(CORE_SCRIPT, null)
+                                    view.evaluateJavascript(appBackgroundScript(hasBackgroundImageState.value), null)
+                                    view.evaluateJavascript(fontScript(fontVersionState.value), null)
+                                    view.evaluateJavascript(parallaxScript(parallaxStrengthState.value), null)
+                                    view.evaluateJavascript(accentScript(accentState.value), null)
+                                }
+
+                                override fun onPageFinished(view: WebView, url: String?) {
+                                    super.onPageFinished(view, url)
+                                    view.evaluateJavascript(CORE_SCRIPT, null)
+                                    view.evaluateJavascript(appBackgroundScript(hasBackgroundImageState.value), null)
+                                    view.evaluateJavascript(fontScript(fontVersionState.value), null)
+                                    view.evaluateJavascript(parallaxScript(parallaxStrengthState.value), null)
+                                    view.evaluateJavascript(accentScript(accentState.value), null)
+                                    CookieManager.getInstance().flush()
+                                }
+
+                                // Отдаём страницам X выбранный шрифт по виртуальному адресу.
+                                // Для остальных сайтов запрос не перехватывается.
+                                override fun shouldInterceptRequest(
+                                    view: WebView,
+                                    request: WebResourceRequest
+                                ): WebResourceResponse? {
+                                    val uri = request.url
+                                    if (uri.path != FONT_URL_PATH || !hostIn(uri.host, X_DOMAINS)) return null
+                                    val file = fontFile(ctx)
+                                    if (!file.exists()) return null
+                                    return try {
+                                        WebResourceResponse(
+                                            "font/ttf", null, 200, "OK",
+                                            mapOf(
+                                                "Access-Control-Allow-Origin" to "*",
+                                                "Cache-Control" to "no-store"
+                                            ),
+                                            FileInputStream(file)
+                                        )
+                                    } catch (_: IOException) {
+                                        null
+                                    }
+                                }
+
+                                // Срабатывает и при SPA-навигации (pushState), поэтому здесь
+                                // же синхронизируем кнопку «Назад» и подсветку вкладки
+                                override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
+                                    super.doUpdateVisitedHistory(view, url, isReload)
+                                    canGoBack = view.canGoBack()
+                                    tabForUrl(url)?.let { webTab = it }
+                                }
+
+                                override fun shouldOverrideUrlLoading(
+                                    view: WebView,
+                                    request: WebResourceRequest
+                                ): Boolean {
+                                    if (!request.isForMainFrame) return false
+                                    val uri = request.url
+                                    val scheme = uri.scheme?.lowercase()
+                                    val isWeb = scheme == "http" || scheme == "https"
+                                    return when {
+                                        isWeb && isInternalUri(uri) -> false
+                                        !isWeb && scheme in LOCAL_SCHEMES -> false
+                                        else -> {
+                                            openExternally(ctx, uri)
+                                            true
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Обычные скачивания
+                            setDownloadListener { url, _, contentDisposition, mimeType, _ ->
+                                startDownload(
+                                    DownloadTask(
+                                        url = url,
+                                        fileName = URLUtil.guessFileName(url, contentDisposition, mimeType),
+                                        mimeType = mimeType?.takeIf { it.isNotBlank() } ?: "application/octet-stream"
+                                    )
+                                )
+                            }
+
+                            // Запоминаем точку касания: по ней при долгом нажатии ищем видео
+                            var lastTouchX = 0f
+                            var lastTouchY = 0f
+                            setOnTouchListener { _, event ->
+                                if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+                                    lastTouchX = event.x
+                                    lastTouchY = event.y
+                                }
+                                false
+                            }
+
+                            // Долгое нажатие на видео, GIF или картинку: сохранить в галерею
+                            setOnLongClickListener { v ->
+                                val webViewRef = v as WebView
+                                val hit = webViewRef.hitTestResult
+                                val imageUrl = hit.extra?.takeIf {
+                                    hit.type == WebView.HitTestResult.IMAGE_TYPE ||
+                                            hit.type == WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE
+                                }
+                                val density = ctx.resources.displayMetrics.density
+                                val probeScript = mediaProbeScript(lastTouchX / density, lastTouchY / density)
+
+                                webViewRef.evaluateJavascript(probeScript) { raw ->
+                                    val probe = parseVideoProbe(raw)
+                                    if (probe != null) {
+                                        val label = if (isGifProbe(probe)) "Сохранить GIF" else "Сохранить видео"
+                                        saveRequest = SaveRequest(label) { startDownload(videoDownloadTask(probe)) }
+                                    } else if (imageUrl != null) {
+                                        saveRequest = SaveRequest("Сохранить изображение") {
+                                            startDownload(imageDownloadTask(imageUrl))
+                                        }
+                                    }
+                                }
+                                // Нажатие поглощаем только на картинках; в остальных местах
+                                // остаётся стандартное поведение (например, выделение текста)
+                                imageUrl != null
+                            }
+
+                            loadUrl(X_HOME_URL)
+                            webView = this
+                        }
+                    },
+                    update = { view ->
+                        view.visibility = if (showSettings) View.GONE else View.VISIBLE
+                        view.setBackgroundColor(if (hasBackgroundImage) android.graphics.Color.TRANSPARENT else currentTheme.webViewColor)
+                        if (view.settings.textZoom != textScale) view.settings.textZoom = textScale
+                    },
+                    onRelease = { view ->
+                        webView = null
+                        view.destroy()
+                    }
+                )
+            }
+
+            if (showSettings) {
+                Box(Modifier.fillMaxSize().padding(bottom = 96.dp)) {
+                    OwOXSettingsScreen(
+                        currentTheme = currentTheme,
+                        onSelectTheme = { newTheme ->
+                            onThemeChange(newTheme)
+                            applyTheme(newTheme)
+                        },
+                        accent = accent,
+                        onAccentChange = onAccentChange,
+                        recentAccents = recentAccents,
+                        onAccentPick = onAccentPick,
+                        textScale = textScale,
+                        parallaxStrength = parallaxStrength,
+                        onParallaxStrengthChange = onParallaxStrengthChange,
+                        onTextScaleChange = onTextScaleChange,
+                        fontName = fontName,
+                        onPickFont = { fontPickerLauncher.launch(arrayOf("*/*")) },
+                        onResetFont = onFontReset,
+                        backgroundImagePath = backgroundImagePath,
+                        backgroundImageRevision = backgroundImageRevision,
+                        onPickBackground = { backgroundPickerLauncher.launch(arrayOf("image/*")) },
+                        onResetBackground = onBackgroundReset,
+                        onExportBackup = { backupExportLauncher.launch("OwOX-backup.zip") },
+                        onImportBackup = { backupImportLauncher.launch(arrayOf("application/zip", "application/octet-stream")) }
+                    )
+                }
+            }
+
+            if (!webOverlayOpen) OwOXGlassNavigationBar(
+                currentTheme = currentTheme,
+                accent = accent,
+                selectedTab = webTab,
+                settingsSelected = showSettings,
+                notificationBadge = notificationBadge,
+                messageBadge = messageBadge,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = innerPadding.calculateBottomPadding() + 18.dp),
+                onTabClick = { index ->
+                    val tab = NavTabs[index]
+                    val onlyCloseSettings = showSettings && webTab == index
+                    showSettings = false
+                    if (!onlyCloseSettings) {
+                        webTab = index
+                        webView?.openPath(tab.path)
+                    }
+                },
+                onSettingsClick = { showSettings = true }
+            )
+        }
+    }
+
+    saveRequest?.let { request ->
+        SaveMediaSheet(request = request, onDismiss = { saveRequest = null })
+    }
+}
+
+@Composable
+private fun OwOXGlassNavigationBar(
+    currentTheme: AppThemeMode,
+    accent: Color,
+    selectedTab: Int,
+    settingsSelected: Boolean,
+    notificationBadge: Int,
+    messageBadge: Int,
+    modifier: Modifier = Modifier,
+    onTabClick: (Int) -> Unit,
+    onSettingsClick: () -> Unit
+) {
+    val glassShape = RoundedCornerShape(30.dp)
+    val glassBase = MaterialTheme.colorScheme.surface
+    val glassEdge = if (currentTheme.isDark) Color.White.copy(alpha = 0.28f)
+        else Color.White.copy(alpha = 0.82f)
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 14.dp)
+            .shadow(18.dp, glassShape, ambientColor = Color.Black.copy(alpha = 0.18f))
+            .clip(glassShape)
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        glassBase.copy(alpha = if (currentTheme.isDark) 0.82f else 0.80f),
+                        glassBase.copy(alpha = if (currentTheme.isDark) 0.90f else 0.87f),
+                        glassBase.copy(alpha = if (currentTheme.isDark) 0.84f else 0.81f)
+                    )
+                )
+            )
+            .border(
+                1.dp,
+                Brush.verticalGradient(
+                    listOf(glassEdge, glassEdge.copy(alpha = 0.22f), glassEdge.copy(alpha = 0.52f))
+                ),
+                glassShape
+            )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().height(80.dp).padding(horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            NavTabs.forEachIndexed { index, tab ->
+                val selected = !settingsSelected && selectedTab == index
+                val badgeCount = when (index) {
+                    TAB_NOTIFICATIONS -> notificationBadge
+                    TAB_MESSAGES -> messageBadge
+                    else -> 0
+                }
+                Column(
+                    modifier = Modifier.weight(1f).fillMaxSize().clickable { onTabClick(index) },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Box(
+                        modifier = Modifier.size(width = 56.dp, height = 32.dp).clip(CircleShape)
+                            .background(if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f) else Color.Transparent),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        BadgedBox(
+                            badge = {
+                                NavBadge(
+                                    count = badgeCount,
+                                    accent = if (index == TAB_NOTIFICATIONS) accent else null
+                                )
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (selected) tab.selectedIcon else tab.icon,
+                                contentDescription = tab.label,
+                                tint = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                    NavLabel(tab.label)
+                }
+            }
+            Column(
+                modifier = Modifier.weight(1f).fillMaxSize().clickable(onClick = onSettingsClick),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Box(
+                    modifier = Modifier.size(width = 56.dp, height = 32.dp).clip(CircleShape)
+                        .background(if (settingsSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f) else Color.Transparent),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (settingsSelected) Icons.Filled.Settings else Icons.Outlined.Settings,
+                        contentDescription = "Настройки",
+                        tint = if (settingsSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                NavLabel("Настройки")
+            }
+        }
+    }
+}
+@Composable
+private fun NavLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
+}
+
+/** Бейдж с числом непрочитанного; M3-вид один и тот же для уведомлений и сообщений. */
+@Composable
+private fun NavBadge(count: Int, accent: Color? = null) {
+    if (count > 0) {
+        val background = accent ?: MaterialTheme.colorScheme.error
+        val foreground = if (accent == null) {
+            MaterialTheme.colorScheme.onError
+        } else if (accent.luminance() > 0.5f) {
+            Color.Black
+        } else {
+            Color.White
+        }
+        Badge(containerColor = background, contentColor = foreground) {
+            Text(if (count > 99) "99+" else count.toString())
+        }
+    }
+}
+
+/** Вынесен отдельно, чтобы тики прогресса перерисовывали только эту полоску, а не весь экран. */
+@Composable
+private fun LoadProgressBar(progress: () -> Int, visible: Boolean) {
+    val value = progress()
+    if (visible && value in 1..99) {
+        LinearProgressIndicator(
+            progress = { value / 100f },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(2.dp),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = Color.Transparent
+        )
+    }
+}
+
+// ───────────────────────────── Настройки ─────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun OwOXSettingsScreen(
+    currentTheme: AppThemeMode,
+    onSelectTheme: (AppThemeMode) -> Unit,
+    accent: Color,
+    onAccentChange: (Color) -> Unit,
+    recentAccents: List<Color>,
+    onAccentPick: (Color) -> Unit,
+    textScale: Int,
+    parallaxStrength: Int,
+    onParallaxStrengthChange: (Int) -> Unit,
+    onTextScaleChange: (Int) -> Unit,
+    fontName: String?,
+    onPickFont: () -> Unit,
+    onResetFont: () -> Unit,
+    backgroundImagePath: String?,
+    backgroundImageRevision: Long,
+    onPickBackground: () -> Unit,
+    onResetBackground: () -> Unit,
+    onExportBackup: () -> Unit,
+    onImportBackup: () -> Unit
+) {
+    val colors = MaterialTheme.colorScheme
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(if (backgroundImagePath != null) Color.Transparent else colors.background)
+            .nestedScroll(scrollBehavior.nestedScrollConnection)
+    ) {
+        // Компактный закреплённый заголовок M3: прижат к верху экрана, без пустого места над текстом
+        TopAppBar(
+            title = { Text("Настройки OwOX", style = MaterialTheme.typography.headlineSmall) },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = if (backgroundImagePath != null) Color.Transparent else colors.background,
+                scrolledContainerColor = if (backgroundImagePath != null) colors.surfaceContainer.copy(alpha = 0.78f) else colors.surfaceContainer
+            ),
+            scrollBehavior = scrollBehavior
+        )
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
+        ) {
+            Text(
+                text = "Оформление",
+                style = MaterialTheme.typography.titleLarge,
+                color = colors.onSurface,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Кастомизация клиента и синхронизация с X",
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Тема оформления",
+                style = MaterialTheme.typography.labelLarge,
+                color = colors.primary,
+                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+            )
+
+            // Сегментированный список: крупные скругления снаружи, мелкие между пунктами
+            val lastIndex = AppThemeMode.entries.lastIndex
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                AppThemeMode.entries.forEachIndexed { index, mode ->
+                    val outer = 24.dp
+                    val inner = 4.dp
+                    val shape = RoundedCornerShape(
+                        topStart = if (index == 0) outer else inner,
+                        topEnd = if (index == 0) outer else inner,
+                        bottomStart = if (index == lastIndex) outer else inner,
+                        bottomEnd = if (index == lastIndex) outer else inner
+                    )
+                    ThemeOptionItem(
+                        mode = mode,
+                        selected = currentTheme == mode,
+                        shape = shape,
+                        onClick = { if (currentTheme != mode) onSelectTheme(mode) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Параллакс ленты",
+                style = MaterialTheme.typography.labelLarge,
+                color = colors.primary,
+                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+            )
+            Column(
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp))
+                    .background(colors.surfaceContainerHigh).padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Сила эффекта", style = MaterialTheme.typography.titleSmall,
+                        color = colors.onSurface, modifier = Modifier.weight(1f))
+                    Text(if (parallaxStrength == 0) "Выкл." else "$parallaxStrength%",
+                        style = MaterialTheme.typography.labelLarge, color = colors.primary)
+                }
+                Slider(
+                    value = parallaxStrength.toFloat(),
+                    onValueChange = { onParallaxStrengthChange((it / 10f).roundToInt() * 10) },
+                    valueRange = 0f..100f,
+                    steps = 9
+                )
+                Text("Посты слегка смещаются при прокрутке и плавно возвращаются на место.",
+                    style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Цвет акцента",
+                style = MaterialTheme.typography.labelLarge,
+                color = colors.primary,
+                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+            )
+            AccentColorCard(
+                accent = accent,
+                recent = recentAccents,
+                onAccentChange = onAccentChange,
+                onAccentPick = onAccentPick
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Текст и шрифт",
+                style = MaterialTheme.typography.labelLarge,
+                color = colors.primary,
+                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+            )
+            TextAppearanceCard(
+                textScale = textScale,
+                onTextScaleChange = onTextScaleChange,
+                fontName = fontName,
+                onPickFont = onPickFont,
+                onResetFont = onResetFont
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Фон приложения",
+                style = MaterialTheme.typography.labelLarge,
+                color = colors.primary,
+                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+            )
+            BackgroundImageCard(
+                imagePath = backgroundImagePath,
+                imageRevision = backgroundImageRevision,
+                accent = accent,
+                onPickImage = onPickBackground,
+                onReset = onResetBackground
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "Резервная копия",
+                style = MaterialTheme.typography.labelLarge,
+                color = colors.primary,
+                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+            )
+            BackupSettingsCard(onExport = onExportBackup, onImport = onImportBackup)
+        }
+    }
+}
+
+@Composable
+private fun BackupSettingsCard(onExport: () -> Unit, onImport: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    Column(
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp))
+            .background(colors.surfaceContainerHigh).padding(16.dp)
+    ) {
+        Text("Перенесите оформление на другое устройство или восстановите его позже.",
+            style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+        Spacer(Modifier.height(14.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilledTonalButton(onClick = onExport) { Text("Создать копию") }
+            TextButton(onClick = onImport) { Text("Восстановить") }
+        }
+        Text("В архив входят тема, акцент, размер текста, шрифт и фоновое изображение.",
+            style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun AppBackgroundImage(path: String, revision: Long, modifier: Modifier = Modifier, dim: Float) {
+    val image by produceState<ImageBitmap?>(null, path, revision) {
+        value = withContext(Dispatchers.IO) {
+            decodeBackgroundPreview(File(path), 1440, 2560)
+        }
+    }
+    Box(modifier = modifier) {
+        image?.let {
+            Image(
+                bitmap = it,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = dim)))
+        }
+    }
+}
+
+@Composable
+private fun BackgroundImageCard(
+    imagePath: String?,
+    imageRevision: Long,
+    accent: Color,
+    onPickImage: () -> Unit,
+    onReset: () -> Unit
+) {
+    val colors = MaterialTheme.colorScheme
+    val preview by produceState<ImageBitmap?>(null, imagePath, imageRevision) {
+        value = withContext(Dispatchers.IO) {
+            imagePath?.let { decodeBackgroundPreview(File(it), 1000, 520) }
+        }
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(colors.surfaceContainerHigh)
+            .padding(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(168.dp)
+                .clip(RoundedCornerShape(18.dp))
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            lerp(colors.surface, accent, 0.30f),
+                            lerp(colors.surface, accent, 0.58f),
+                            lerp(colors.surface, accent, 0.26f)
+                        )
+                    )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            if (preview != null) {
+                Image(
+                    bitmap = preview!!,
+                    contentDescription = "Предпросмотр фона приложения",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+                Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.18f)))
+                Text(
+                    text = "Предпросмотр фона",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.White,
+                    modifier = Modifier.align(Alignment.BottomStart).padding(14.dp)
+                )
+            } else {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Ваше фото появится здесь", style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+                    Spacer(Modifier.height(4.dp))
+                    Text("JPG, PNG, WEBP и другие изображения", style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+                }
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = if (imagePath == null) "Добавьте изображение — оно станет фоном экранов клиента и будет просматриваться за лентой." else "Фото установлено и сохранено на устройстве. Оно останется фоном после перезапуска.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = colors.onSurfaceVariant
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = "Для лучшего вида рекомендуем тёмный фон: выберите «Тёмная (Ночная)» в разделе «Тема оформления».",
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.primary
+        )
+        Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            FilledTonalButton(onClick = onPickImage) {
+                Text(if (imagePath == null) "Выбрать фото" else "Заменить фото")
+            }
+            Spacer(Modifier.width(8.dp))
+            TextButton(onClick = onReset, enabled = imagePath != null) {
+                Text("Сбросить")
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThemeOptionItem(
+    mode: AppThemeMode,
+    selected: Boolean,
+    shape: Shape,
+    onClick: () -> Unit
+) {
+    ListItem(
+        headlineContent = { Text(mode.title) },
+        supportingContent = { Text(mode.subtitle) },
+        leadingContent = { ThemeSwatch(mode) },
+        // Нажатие обрабатывает вся строка (selectable), у самой кнопки клик отключён
+        trailingContent = { RadioButton(selected = selected, onClick = null) },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+    )
+}
+
+/** Кружок-превью темы: её фон и точка текущего акцентного цвета. */
+@Composable
+private fun ThemeSwatch(mode: AppThemeMode) {
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(mode.bgColor)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(14.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary)
+        )
+    }
+}
+
+/** Выбор акцентного цвета: готовые цвета X и RGB-палитра на трёх слайдерах. */
+@Composable
+private fun AccentColorCard(
+    accent: Color,
+    recent: List<Color>,
+    onAccentChange: (Color) -> Unit,
+    onAccentPick: (Color) -> Unit
+) {
+    val colors = MaterialTheme.colorScheme
+    val argb = accent.toArgb()
+    val r = (argb shr 16) and 0xFF
+    val g = (argb shr 8) and 0xFF
+    val b = argb and 0xFF
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(colors.surfaceContainerHigh)
+            .padding(16.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(accent)
+                    .border(1.dp, colors.outlineVariant, CircleShape)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = String.format(Locale.ROOT, "#%02X%02X%02X", r, g, b),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colors.onSurface
+                )
+                Text(
+                    text = "RGB $r, $g, $b",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant
+                )
+            }
+            TextButton(
+                onClick = { onAccentPick(DEFAULT_ACCENT) },
+                enabled = argb != DEFAULT_ACCENT.toArgb()
+            ) {
+                Text("Сбросить")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Недавние",
+            style = MaterialTheme.typography.labelMedium,
+            color = colors.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        if (recent.isEmpty()) {
+            Text(
+                text = "Здесь появятся цвета, на которых вы останавливались.",
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.onSurfaceVariant
+            )
+        } else {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                recent.forEach { color ->
+                    AccentPresetDot(
+                        color = color,
+                        selected = color.toArgb() == argb,
+                        onClick = { onAccentPick(color) }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ChannelSlider(label = "R", value = r, tint = Color(0xFFE53935)) { onAccentChange(Color(it, g, b)) }
+        ChannelSlider(label = "G", value = g, tint = Color(0xFF43A047)) { onAccentChange(Color(r, it, b)) }
+        ChannelSlider(label = "B", value = b, tint = Color(0xFF1E88E5)) { onAccentChange(Color(r, g, it)) }
+    }
+}
+
+@Composable
+private fun AccentPresetDot(color: Color, selected: Boolean, onClick: () -> Unit) {
+    val onColor = if (color.luminance() > 0.45f) Color.Black else Color.White
+    Box(
+        modifier = Modifier
+            .size(36.dp)
+            .clip(CircleShape)
+            .background(color)
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        if (selected) {
+            Icon(
+                imageVector = Icons.Filled.Check,
+                contentDescription = null,
+                tint = onColor,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ChannelSlider(label: String, value: Int, tint: Color, onValueChange: (Int) -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            color = colors.onSurfaceVariant,
+            modifier = Modifier.width(20.dp)
+        )
+        Slider(
+            value = value.toFloat(),
+            onValueChange = { onValueChange(it.roundToInt()) },
+            valueRange = 0f..255f,
+            modifier = Modifier.weight(1f),
+            colors = SliderDefaults.colors(
+                thumbColor = tint,
+                activeTrackColor = tint,
+                inactiveTrackColor = tint.copy(alpha = 0.24f)
+            )
+        )
+        Text(
+            text = value.toString(),
+            style = MaterialTheme.typography.bodyMedium,
+            color = colors.onSurface,
+            textAlign = TextAlign.End,
+            modifier = Modifier.width(36.dp)
+        )
+    }
+}
+
+/** Размер текста в X и выбор своего шрифта из файла. Предпросмотр рисуется текущим шрифтом приложения. */
+@Composable
+private fun TextAppearanceCard(
+    textScale: Int,
+    onTextScaleChange: (Int) -> Unit,
+    fontName: String?,
+    onPickFont: () -> Unit,
+    onResetFont: () -> Unit
+) {
+    val colors = MaterialTheme.colorScheme
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(colors.surfaceContainerHigh)
+            .padding(16.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Размер текста в X",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colors.onSurface
+                )
+                Text(
+                    text = "$textScale%",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant
+                )
+            }
+            TextButton(
+                onClick = { onTextScaleChange(TEXT_SCALE_DEFAULT) },
+                enabled = textScale != TEXT_SCALE_DEFAULT
+            ) {
+                Text("Сбросить")
+            }
+        }
+
+        Slider(
+            value = textScale.toFloat(),
+            onValueChange = { onTextScaleChange((it / 5f).roundToInt() * 5) },
+            valueRange = TEXT_SCALE_MIN.toFloat()..TEXT_SCALE_MAX.toFloat(),
+            steps = (TEXT_SCALE_MAX - TEXT_SCALE_MIN) / 5 - 1
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Свой шрифт",
+            style = MaterialTheme.typography.titleMedium,
+            color = colors.onSurface
+        )
+        Text(
+            text = fontName ?: "Системный",
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            FilledTonalButton(onClick = onPickFont) {
+                Text("Выбрать файл")
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            TextButton(onClick = onResetFont, enabled = fontName != null) {
+                Text("Сбросить")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(colors.surfaceContainerHighest)
+                .padding(12.dp)
+        ) {
+            Text(
+                text = "Съешь ещё этих мягких французских булок, да выпей чаю.\nThe quick brown fox 0123456789",
+                style = MaterialTheme.typography.bodyLarge,
+                color = colors.onSurface
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Поддерживаются файлы .ttf, .otf и .ttc. Шрифт применяется к интерфейсу приложения и к тексту в X.",
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.onSurfaceVariant
+        )
+    }
+}
